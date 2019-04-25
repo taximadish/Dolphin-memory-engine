@@ -10,13 +10,14 @@
 namespace DolphinComm
 {
 
-bool WindowsDolphinProcess::findPID()
+bool WindowsDolphinProcess::findPID(u16 num)
 {
   PROCESSENTRY32 entry;
   entry.dwSize = sizeof(PROCESSENTRY32);
 
   HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
 
+  u16 found = 0;
   if (Process32First(snapshot, &entry) == TRUE)
   {
     do
@@ -25,8 +26,12 @@ bool WindowsDolphinProcess::findPID()
           std::string(entry.szExeFile) == "DolphinQt2.exe" ||
           std::string(entry.szExeFile) == "DolphinWx.exe")
       {
-        m_PID = entry.th32ProcessID;
-        break;
+        found++;
+        if (found == num)
+        {
+          m_PID = entry.th32ProcessID;
+          break;
+        }
       }
     } while (Process32Next(snapshot, &entry) == TRUE);
   }

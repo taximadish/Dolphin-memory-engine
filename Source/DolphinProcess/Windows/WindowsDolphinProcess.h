@@ -14,7 +14,7 @@ public:
   WindowsDolphinProcess()
   {
   }
-  bool findPID() override;
+  bool findPID(u16 num) override;
   bool obtainEmuRAMInformations() override;
   bool readFromRAM(const u32 offset, char* buffer, const size_t size,
                    const bool withBSwap) override;

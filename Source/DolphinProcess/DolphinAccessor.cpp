@@ -34,10 +34,10 @@ void DolphinAccessor::free()
     delete[] m_updatedRAMCache;
 }
 
-void DolphinAccessor::hook()
+void DolphinAccessor::hook(u16 num)
 {
   init();
-  if (!m_instance->findPID())
+  if (!m_instance->findPID(num))
   {
     m_status = DolphinStatus::notRunning;
   }

@@ -47,7 +47,6 @@ private:
   void initialiseWidgets();
   void makeLayouts();
   void makeMemViewer();
-  void firstHookAttempt();
 
   MemWatchWidget* m_watcher;
   MemScanWidget* m_scanner;
@@ -55,6 +54,7 @@ private:
 
   QLabel* m_lblDolphinStatus;
   QPushButton* m_btnAttempHook;
+  QLineEdit* m_processNum;
   QPushButton* m_btnUnhook;
   QLabel* m_lblMem2Status;
   QPushButton* m_btnOpenMemViewer;

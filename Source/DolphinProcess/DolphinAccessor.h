@@ -20,7 +20,7 @@ public:
 
   static void init();
   static void free();
-  static void hook();
+  static void hook(u16 num);
   static void unHook();
   static bool readFromRAM(const u32 offset, char* buffer, const size_t size, const bool withBSwap);
   static bool writeToRAM(const u32 offset, const char* buffer, const size_t size,

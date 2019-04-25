@@ -20,7 +20,7 @@ MainWindow::MainWindow()
   makeMenus();
   DolphinComm::DolphinAccessor::init();
   makeMemViewer();
-  firstHookAttempt();
+  updateDolphinHookingStatus();
 }
 
 MainWindow::~MainWindow()
@@ -108,6 +108,7 @@ void MainWindow::initialiseWidgets()
   m_btnUnhook = new QPushButton(tr("Unhook"));
   connect(m_btnAttempHook, &QPushButton::clicked, this, &MainWindow::onHookAttempt);
   connect(m_btnUnhook, &QPushButton::clicked, this, &MainWindow::onUnhook);
+  m_processNum = new QLineEdit(m_btnAttempHook);
 
   m_lblDolphinStatus = new QLabel("");
   m_lblDolphinStatus->setAlignment(Qt::AlignHCenter);
@@ -151,14 +152,6 @@ void MainWindow::makeMemViewer()
   connect(m_viewer, &MemViewerWidget::addWatchRequested, m_watcher, &MemWatchWidget::addWatchEntry);
   connect(m_watcher, &MemWatchWidget::goToAddressInViewer, this,
           &MainWindow::onOpenMemViewerWithAddress);
-}
-
-void MainWindow::firstHookAttempt()
-{
-  onHookAttempt();
-  if (DolphinComm::DolphinAccessor::getStatus() ==
-      DolphinComm::DolphinAccessor::DolphinStatus::hooked)
-    updateMem2Status();
 }
 
 void MainWindow::addSelectedResultsToWatchList(Common::MemType type, size_t length, bool isUnsigned,
@@ -266,7 +259,8 @@ void MainWindow::updateDolphinHookingStatus()
 
 void MainWindow::onHookAttempt()
 {
-  DolphinComm::DolphinAccessor::hook();
+  u16 num = m_processNum->text().toInt();
+  DolphinComm::DolphinAccessor::hook(num);
   updateDolphinHookingStatus();
   if (DolphinComm::DolphinAccessor::getStatus() ==
       DolphinComm::DolphinAccessor::DolphinStatus::hooked)
