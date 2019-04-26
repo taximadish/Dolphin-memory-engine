@@ -54,7 +54,7 @@
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(QTDIR)lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>qtmaind.lib;Qt5Widgetsd.lib;Qt5Cored.lib;Qt5Guid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>qtmaind.lib;ws2_32.lib;Qt5Widgetsd.lib;Qt5Cored.lib;Qt5Guid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
@@ -78,7 +78,6 @@
       <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
-
   <!-- Files and target to copy to the output directory -->
   <PropertyGroup>
     <!--
@@ -100,10 +99,9 @@
   </ItemGroup>
   <Target Name="CopyDlls" AfterTargets="Build">
     <Message Importance="High" Text="Copying required files for $(Configuration)..." />
-    <Message Importance="High" Text="Copying '%(FilesToCopy.FullPath)' -> '$(OutDir)%(FilesToCopy.SubDir)%(Filename)%(Extension)'." />
+    <Message Importance="High" Text="Copying '%(FilesToCopy.FullPath)' -&gt; '$(OutDir)%(FilesToCopy.SubDir)%(Filename)%(Extension)'." />
     <Copy SourceFiles="@(FilesToCopy)" DestinationFiles="$(OutDir)%(FilesToCopy.SubDir)%(Filename)%(Extension)" />
   </Target>
-
   <!-- Files -->
   <ItemGroup>
     <ClCompile Include="**\*.cpp" Exclude="GeneratedFiles\**\*.cpp" />

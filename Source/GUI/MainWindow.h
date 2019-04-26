@@ -18,19 +18,29 @@ class MainWindow : public QMainWindow
 public:
   MainWindow();
   ~MainWindow();
+
+  enum ConnectState
+  {
+	  NOT_CONNECTED = 0,
+	  CONNECTED,
+	  FAILED
+  };
+
   void closeEvent(QCloseEvent* event) override;
   void addWatchRequested(u32 address, Common::MemType type, size_t length, bool isUnsigned,
                          Common::MemBase base);
-  void addSelectedResultsToWatchList(Common::MemType type, size_t length, bool isUnsigned,
-                                     Common::MemBase base);
-  void addAllResultsToWatchList(Common::MemType type, size_t length, bool isUnsigned,
-                                Common::MemBase base);
   void updateDolphinHookingStatus();
   void onHookAttempt();
   void onUnhook();
-  void onOpenMenViewer();
-  void onOpenMemViewerWithAddress(u32 address);
   void updateMem2Status();
+
+  void updateConnectStatus();
+  void onConnectAttempt();
+  ConnectState initConnection();
+  bool teardownConnection();
+  ConnectState createConnection();
+  void onUpdateTimer();
+  void onChkHostChanged();
 
   void onOpenWatchFile();
   void onSaveWatchFile();
@@ -46,18 +56,26 @@ private:
   void makeMenus();
   void initialiseWidgets();
   void makeLayouts();
-  void makeMemViewer();
+
+  ConnectState m_connectState;
+  int m_socket;
+  int m_remoteSocket;
 
   MemWatchWidget* m_watcher;
-  MemScanWidget* m_scanner;
-  MemViewerWidget* m_viewer;
 
   QLabel* m_lblDolphinStatus;
   QPushButton* m_btnAttempHook;
-  QLineEdit* m_processNum;
+  QLineEdit* m_txtProcessNum;
   QPushButton* m_btnUnhook;
   QLabel* m_lblMem2Status;
-  QPushButton* m_btnOpenMemViewer;
+
+  QTimer* m_updateTimer;
+  QLabel* m_lblConnectStatus;
+  bool m_isHost;
+  QCheckBox* m_chkHost;
+  QLineEdit* m_txtAddress;
+  QLineEdit* m_txtPort;
+  QPushButton* m_btnConnect;
 
   QMenu* m_menuFile;
   QMenu* m_menuEdit;

@@ -7,6 +7,8 @@
 #include <QString>
 #include <QVBoxLayout>
 #include <string>
+#include <WinSock2.h>
+#include <Ws2tcpip.h>
 
 #include "../DolphinProcess/DolphinAccessor.h"
 #include "../MemoryWatch/MemWatchEntry.h"
@@ -19,13 +21,19 @@ MainWindow::MainWindow()
   makeLayouts();
   makeMenus();
   DolphinComm::DolphinAccessor::init();
-  makeMemViewer();
   updateDolphinHookingStatus();
+
+  m_updateTimer = new QTimer(this);
+  m_updateTimer->setInterval(100);
+  m_updateTimer->start();
+  connect(m_updateTimer, &QTimer::timeout, this, &MainWindow::onUpdateTimer);
+  m_connectState = ConnectState::NOT_CONNECTED;
+  m_isHost = false;
+  updateConnectStatus();
 }
 
 MainWindow::~MainWindow()
 {
-  delete m_viewer;
   delete m_watcher;
   DolphinComm::DolphinAccessor::free();
 }
@@ -61,13 +69,6 @@ void MainWindow::makeMenus()
 
   connect(m_actSettings, &QAction::triggered, this, &MainWindow::onOpenSettings);
 
-  connect(m_actViewScanner, &QAction::toggled, this, [=] {
-    if (m_actViewScanner->isChecked())
-      m_scanner->show();
-    else
-      m_scanner->hide();
-  });
-
   connect(m_actQuit, &QAction::triggered, this, &MainWindow::onQuit);
   connect(m_actAbout, &QAction::triggered, this, &MainWindow::onAbout);
 
@@ -92,23 +93,27 @@ void MainWindow::makeMenus()
 
 void MainWindow::initialiseWidgets()
 {
-  m_scanner = new MemScanWidget();
-  connect(m_scanner, &MemScanWidget::requestAddWatchEntry, this, &MainWindow::addWatchRequested);
-  connect(m_scanner, &MemScanWidget::requestAddAllResultsToWatchList, this,
-          &MainWindow::addAllResultsToWatchList);
-  connect(m_scanner, &MemScanWidget::requestAddSelectedResultsToWatchList, this,
-          &MainWindow::addSelectedResultsToWatchList);
 
   m_watcher = new MemWatchWidget(this);
-
-  connect(m_scanner, &MemScanWidget::mustUnhook, this, &MainWindow::onUnhook);
-  connect(m_watcher, &MemWatchWidget::mustUnhook, this, &MainWindow::onUnhook);
 
   m_btnAttempHook = new QPushButton(tr("Hook"));
   m_btnUnhook = new QPushButton(tr("Unhook"));
   connect(m_btnAttempHook, &QPushButton::clicked, this, &MainWindow::onHookAttempt);
   connect(m_btnUnhook, &QPushButton::clicked, this, &MainWindow::onUnhook);
-  m_processNum = new QLineEdit(m_btnAttempHook);
+  m_txtProcessNum = new QLineEdit();
+  m_txtProcessNum->setPlaceholderText("Process Number (Default 1)");
+  m_txtProcessNum->setText("1");
+
+  m_chkHost = new QCheckBox();
+  m_chkHost->setText("Host");
+  connect(m_chkHost, &QCheckBox::stateChanged, this, &MainWindow::onChkHostChanged);
+  m_txtAddress = new QLineEdit();
+  m_txtAddress->setPlaceholderText("IP Address (Default localhost)");
+  m_txtAddress->setText("localhost");
+  m_txtPort = new QLineEdit();
+  m_txtPort->setPlaceholderText("Port (Default 1400)");
+  m_btnConnect = new QPushButton(tr("Connect"));
+  connect(m_btnConnect, &QPushButton::clicked, this, &MainWindow::onConnectAttempt);
 
   m_lblDolphinStatus = new QLabel("");
   m_lblDolphinStatus->setAlignment(Qt::AlignHCenter);
@@ -116,66 +121,36 @@ void MainWindow::initialiseWidgets()
   m_lblMem2Status = new QLabel("");
   m_lblMem2Status->setAlignment(Qt::AlignHCenter);
 
-  m_btnOpenMemViewer = new QPushButton(tr("Open memory viewer"));
-  connect(m_btnOpenMemViewer, &QPushButton::clicked, this, &MainWindow::onOpenMenViewer);
+  m_lblConnectStatus = new QLabel("");
+  m_lblConnectStatus->setAlignment(Qt::AlignRight);
 }
 
 void MainWindow::makeLayouts()
 {
   QHBoxLayout* dolphinHookButtons_layout = new QHBoxLayout();
+  dolphinHookButtons_layout->addWidget(m_txtProcessNum);
   dolphinHookButtons_layout->addWidget(m_btnAttempHook);
   dolphinHookButtons_layout->addWidget(m_btnUnhook);
 
-  QFrame* separatorline = new QFrame();
-  separatorline->setFrameShape(QFrame::HLine);
+  QHBoxLayout* socketSettings_layout = new QHBoxLayout();
+  socketSettings_layout->addWidget(m_chkHost);
+  socketSettings_layout->addWidget(m_txtAddress);
+  socketSettings_layout->addWidget(m_txtPort);
+  socketSettings_layout->addWidget(m_btnConnect);
 
   QVBoxLayout* mainLayout = new QVBoxLayout;
   mainLayout->addWidget(m_lblDolphinStatus);
   mainLayout->addLayout(dolphinHookButtons_layout);
   mainLayout->addWidget(m_lblMem2Status);
-  mainLayout->addWidget(separatorline);
-  mainLayout->addWidget(m_scanner);
-  mainLayout->addSpacing(5);
-  mainLayout->addWidget(m_btnOpenMemViewer);
-  mainLayout->addSpacing(5);
+  mainLayout->addSpacing(20);
+  mainLayout->addWidget(m_lblConnectStatus);
+  mainLayout->addLayout(socketSettings_layout);
+  mainLayout->addSpacing(20);
   mainLayout->addWidget(m_watcher);
 
   QWidget* mainWidget = new QWidget();
   mainWidget->setLayout(mainLayout);
   setCentralWidget(mainWidget);
-}
-
-void MainWindow::makeMemViewer()
-{
-  m_viewer = new MemViewerWidget(nullptr, Common::MEM1_START);
-  connect(m_viewer, &MemViewerWidget::mustUnhook, this, &MainWindow::onUnhook);
-  connect(m_viewer, &MemViewerWidget::addWatchRequested, m_watcher, &MemWatchWidget::addWatchEntry);
-  connect(m_watcher, &MemWatchWidget::goToAddressInViewer, this,
-          &MainWindow::onOpenMemViewerWithAddress);
-}
-
-void MainWindow::addSelectedResultsToWatchList(Common::MemType type, size_t length, bool isUnsigned,
-                                               Common::MemBase base)
-{
-  QModelIndexList selection = m_scanner->getSelectedResults();
-  for (int i = 0; i < selection.count(); i++)
-  {
-    u32 address = m_scanner->getResultListModel()->getResultAddress(selection.at(i).row());
-    MemWatchEntry* newEntry =
-        new MemWatchEntry(tr("No label"), address, type, base, isUnsigned, length);
-    m_watcher->addWatchEntry(newEntry);
-  }
-}
-
-void MainWindow::addAllResultsToWatchList(Common::MemType type, size_t length, bool isUnsigned,
-                                          Common::MemBase base)
-{
-  for (auto item : m_scanner->getAllResults())
-  {
-    MemWatchEntry* newEntry =
-        new MemWatchEntry(tr("No label"), item, type, base, isUnsigned, length);
-    m_watcher->addWatchEntry(newEntry);
-  }
 }
 
 void MainWindow::addWatchRequested(u32 address, Common::MemType type, size_t length,
@@ -186,26 +161,153 @@ void MainWindow::addWatchRequested(u32 address, Common::MemType type, size_t len
   m_watcher->addWatchEntry(newEntry);
 }
 
-void MainWindow::onOpenMenViewer()
-{
-  m_viewer->show();
-  m_viewer->raise();
-}
-
-void MainWindow::onOpenMemViewerWithAddress(u32 address)
-{
-  m_viewer->goToAddress(address);
-  m_viewer->show();
-}
-
 void MainWindow::updateMem2Status()
 {
   if (DolphinComm::DolphinAccessor::isMEM2Present())
     m_lblMem2Status->setText(tr("The extended Wii-only memory is present"));
   else
     m_lblMem2Status->setText(tr("The extended Wii-only memory is absent"));
-  m_viewer->onMEM2StatusChanged(DolphinComm::DolphinAccessor::isMEM2Present());
 }
+
+
+
+MainWindow::ConnectState MainWindow::initConnection()
+{
+  const int iReqWinsockVer = 2; // Minimum winsock version required
+
+  WSADATA wsaData;
+
+  if (WSAStartup(MAKEWORD(iReqWinsockVer, 0), &wsaData) == 0)
+  {
+    // Check if major version is at least iReqWinsockVer
+    if (LOBYTE(wsaData.wVersion) >= iReqWinsockVer)
+      return createConnection();
+    else
+      return ConnectState::FAILED;
+  }
+  else
+  {
+    return ConnectState::FAILED;
+  }
+}
+
+bool MainWindow::teardownConnection()
+{
+  closesocket(m_socket);
+  return WSACleanup();
+}
+
+void MainWindow::onUpdateTimer()
+{
+  if (m_connectState != CONNECTED)
+    return;
+
+  if (DolphinComm::DolphinAccessor::getStatus() !=
+      DolphinComm::DolphinAccessor::DolphinStatus::hooked)
+    return;
+
+
+  
+  char data[20];
+  if (m_isHost)
+  {
+    static int coins = 0;
+    coins++;
+    sprintf_s(data, "Coins:%d", coins);
+    send(m_remoteSocket, data, 20, 0);
+  }
+  else // Client
+  {
+    int bytesReceived = recv(m_socket, data, 20, 0);
+
+    if (bytesReceived > 0) // connection closed
+    {
+      m_lblConnectStatus->setText(data);
+    }
+  }
+}
+
+void MainWindow::onConnectAttempt()
+{
+  teardownConnection();
+  m_connectState = initConnection();
+  updateConnectStatus();
+}
+
+void MainWindow::onChkHostChanged()
+{
+  if (m_connectState != CONNECTED)
+  {
+    m_isHost = m_chkHost->isChecked();
+    m_lblDolphinStatus->setText(m_isHost ? "Host" : "Client");
+  }
+}
+
+MainWindow::ConnectState MainWindow::createConnection()
+{
+  const char* address = "127.0.0.1";
+  int portno = 1400;
+
+  m_socket = socket(AF_INET, SOCK_STREAM, 0);
+  if (m_socket < 0)
+    return ConnectState::FAILED;
+  
+  // Binding info
+  sockaddr_in sockAddr;
+  sockAddr.sin_family = AF_INET;
+  sockAddr.sin_port = htons(portno);
+  inet_pton(AF_INET, address, &sockAddr.sin_addr.S_un.S_addr);
+
+  if (m_isHost)
+  {
+    if (::bind(m_socket, (sockaddr*)(&sockAddr), sizeof(sockAddr)) != 0)
+      return ConnectState::FAILED;
+
+	if (listen(m_socket, SOMAXCONN) != 0)
+      return ConnectState::FAILED;
+    
+	// Remote = Client
+	sockaddr_in remoteAddr;
+    int iRemoteAddrLen;
+
+    iRemoteAddrLen = sizeof(remoteAddr);
+    m_remoteSocket = accept(m_socket, (sockaddr*)&remoteAddr, &iRemoteAddrLen);
+    if (m_remoteSocket == INVALID_SOCKET)
+      return ConnectState::FAILED;
+
+	return CONNECTED;
+  }
+  else // Client
+  {
+    if (::connect(m_socket, (struct sockaddr*)&sockAddr, sizeof(sockAddr)) < 0)
+      return ConnectState::FAILED;
+
+	return CONNECTED;
+  }
+}
+
+void MainWindow::updateConnectStatus()
+{
+  const char* text;
+  switch (m_connectState)
+  {
+  case NOT_CONNECTED:
+    text = "Not Connected";
+    break;
+  case CONNECTED:
+    text = "Connected!";
+    break;
+  case FAILED:
+    text = "Connection Failed";
+    break;
+  default:
+    text = "Unknown connection state?!";
+    break;
+  }
+  m_lblConnectStatus->setText(tr(text));
+}
+
+
 
 void MainWindow::updateDolphinHookingStatus()
 {
@@ -216,9 +318,7 @@ void MainWindow::updateDolphinHookingStatus()
     m_lblDolphinStatus->setText(
         tr("Hooked successfully to Dolphin, current start address: ") +
         QString::number(DolphinComm::DolphinAccessor::getEmuRAMAddressStart(), 16).toUpper());
-    m_scanner->setEnabled(true);
     m_watcher->setEnabled(true);
-    m_btnOpenMemViewer->setEnabled(true);
     m_btnAttempHook->hide();
     m_btnUnhook->show();
     break;
@@ -226,9 +326,7 @@ void MainWindow::updateDolphinHookingStatus()
   case DolphinComm::DolphinAccessor::DolphinStatus::notRunning:
   {
     m_lblDolphinStatus->setText(tr("Cannot hook to Dolphin, the process is not running"));
-    m_scanner->setDisabled(true);
     m_watcher->setDisabled(true);
-    m_btnOpenMemViewer->setDisabled(true);
     m_btnAttempHook->show();
     m_btnUnhook->hide();
     break;
@@ -237,9 +335,7 @@ void MainWindow::updateDolphinHookingStatus()
   {
     m_lblDolphinStatus->setText(
         tr("Cannot hook to Dolphin, the process is running, but no emulation has been started"));
-    m_scanner->setDisabled(true);
     m_watcher->setDisabled(true);
-    m_btnOpenMemViewer->setDisabled(true);
     m_btnAttempHook->show();
     m_btnUnhook->hide();
     break;
@@ -247,9 +343,7 @@ void MainWindow::updateDolphinHookingStatus()
   case DolphinComm::DolphinAccessor::DolphinStatus::unHooked:
   {
     m_lblDolphinStatus->setText(tr("Unhooked, press \"Hook\" to hook to Dolphin again"));
-    m_scanner->setDisabled(true);
     m_watcher->setDisabled(true);
-    m_btnOpenMemViewer->setDisabled(true);
     m_btnAttempHook->show();
     m_btnUnhook->hide();
     break;
@@ -259,28 +353,22 @@ void MainWindow::updateDolphinHookingStatus()
 
 void MainWindow::onHookAttempt()
 {
-  u16 num = m_processNum->text().toInt();
+  u16 num = m_txtProcessNum->text().toInt();
   DolphinComm::DolphinAccessor::hook(num);
   updateDolphinHookingStatus();
   if (DolphinComm::DolphinAccessor::getStatus() ==
       DolphinComm::DolphinAccessor::DolphinStatus::hooked)
   {
-    m_scanner->getUpdateTimer()->start(SConfig::getInstance().getScannerUpdateTimerMs());
     m_watcher->getUpdateTimer()->start(SConfig::getInstance().getWatcherUpdateTimerMs());
     m_watcher->getFreezeTimer()->start(SConfig::getInstance().getFreezeTimerMs());
-    m_viewer->getUpdateTimer()->start(SConfig::getInstance().getViewerUpdateTimerMs());
-    m_viewer->hookStatusChanged(true);
     updateMem2Status();
   }
 }
 
 void MainWindow::onUnhook()
 {
-  m_scanner->getUpdateTimer()->stop();
   m_watcher->getUpdateTimer()->stop();
   m_watcher->getFreezeTimer()->stop();
-  m_viewer->getUpdateTimer()->stop();
-  m_viewer->hookStatusChanged(false);
   m_lblMem2Status->setText(QString(""));
   DolphinComm::DolphinAccessor::unHook();
   updateDolphinHookingStatus();
@@ -324,17 +412,13 @@ void MainWindow::onOpenSettings()
   delete dlg;
   if (dlgResult == QDialog::Accepted)
   {
-    m_scanner->getUpdateTimer()->stop();
     m_watcher->getUpdateTimer()->stop();
     m_watcher->getFreezeTimer()->stop();
-    m_viewer->getUpdateTimer()->stop();
     if (DolphinComm::DolphinAccessor::getStatus() ==
         DolphinComm::DolphinAccessor::DolphinStatus::hooked)
     {
-      m_scanner->getUpdateTimer()->start(SConfig::getInstance().getScannerUpdateTimerMs());
       m_watcher->getUpdateTimer()->start(SConfig::getInstance().getWatcherUpdateTimerMs());
       m_watcher->getFreezeTimer()->start(SConfig::getInstance().getFreezeTimerMs());
-      m_viewer->getUpdateTimer()->start(SConfig::getInstance().getViewerUpdateTimerMs());
     }
   }
 }
@@ -359,7 +443,6 @@ void MainWindow::closeEvent(QCloseEvent* event)
 {
   if (m_watcher->warnIfUnsavedChanges())
   {
-    m_viewer->close();
     event->accept();
   }
   else
