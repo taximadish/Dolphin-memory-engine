@@ -302,8 +302,9 @@ Common::MemOperationReturnCode MemWatchEntry::writeMemoryToRAM(const char* memor
   return Common::MemOperationReturnCode::operationFailed;
 }
 
-std::string MemWatchEntry::getStringFromMemory() const
+std::string MemWatchEntry::getStringFromMemory()
 {
+  readMemoryFromRAM();
   if (m_boundToPointer && !m_isValidPointer)
     return "???";
   return Common::formatMemoryToString(m_memory, m_type, m_length, m_base, m_isUnsigned);
@@ -331,4 +332,24 @@ Common::MemOperationReturnCode MemWatchEntry::writeMemoryFromString(const std::s
     delete[] buffer;
     return writeReturn;
   }
+}
+
+
+Common::MemOperationReturnCode MemWatchEntry::writeMemoryFromInt(const std::int32_t& inputInt)
+{
+  const char* f;
+
+  switch (m_base)
+  {
+  case (Common::MemBase::base_hexadecimal):
+    f = "%x";
+    break;
+  default:
+    f = "%d";
+    break;
+  }
+
+  char s[20];
+  sprintf_s(s, f, inputInt);
+  return writeMemoryFromString(s);
 }

@@ -23,6 +23,7 @@ MainWindow::MainWindow()
   DolphinComm::DolphinAccessor::init();
   updateDolphinHookingStatus();
 
+  m_memManager = new MemManager();
   m_updateTimer = new QTimer(this);
   m_updateTimer->setInterval(100);
   m_updateTimer->start();
@@ -206,24 +207,26 @@ void MainWindow::onUpdateTimer()
       DolphinComm::DolphinAccessor::DolphinStatus::hooked)
     return;
 
-
-  
   char data[20];
   if (m_isHost)
   {
-    static int coins = 0;
-    coins++;
-    sprintf_s(data, "Coins:%d", coins);
+    strcpy_s(data, m_memManager->readEntryValue("Coins").c_str());
     send(m_remoteSocket, data, 20, 0);
   }
   else // Client
   {
     int bytesReceived = recv(m_socket, data, 20, 0);
 
-    if (bytesReceived > 0) // connection closed
+    if (bytesReceived > 0)
     {
       m_lblConnectStatus->setText(data);
+      m_memManager->setEntryValue("Coins", data);
     }
+	else // connection closed
+	{
+          teardownConnection();
+          m_connectState = CLOSED;
+	}
   }
 }
 

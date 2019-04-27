@@ -10,6 +10,7 @@
 #include "MemScanner/MemScanWidget.h"
 #include "MemViewer/MemViewerWidget.h"
 #include "MemWatcher/MemWatchWidget.h"
+#include "../MemManager/MemManager.h"
 
 class MainWindow : public QMainWindow
 {
@@ -23,6 +24,7 @@ public:
   {
 	  NOT_CONNECTED = 0,
 	  CONNECTED,
+	  CLOSED,
 	  FAILED
   };
 
@@ -69,6 +71,9 @@ private:
   QPushButton* m_btnUnhook;
   QLabel* m_lblMem2Status;
 
+
+
+  MemManager* m_memManager;
   QTimer* m_updateTimer;
   QLabel* m_lblConnectStatus;
   bool m_isHost;
@@ -77,6 +82,8 @@ private:
   QLineEdit* m_txtPort;
   QPushButton* m_btnConnect;
 
+  
+  
   QMenu* m_menuFile;
   QMenu* m_menuEdit;
   QMenu* m_menuView;

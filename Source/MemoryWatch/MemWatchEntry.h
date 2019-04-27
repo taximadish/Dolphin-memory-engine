@@ -48,8 +48,9 @@ public:
   std::string getAddressStringForPointerLevel(const int level);
   Common::MemOperationReturnCode readMemoryFromRAM();
 
-  std::string getStringFromMemory() const;
+  std::string getStringFromMemory();
   Common::MemOperationReturnCode writeMemoryFromString(const std::string& inputString);
+  Common::MemOperationReturnCode writeMemoryFromInt(const int32_t& inputInt);
 
 private:
   Common::MemOperationReturnCode writeMemoryToRAM(const char* memory, const size_t size);
