@@ -9,6 +9,7 @@
 #include <string>
 #include <WinSock2.h>
 #include <Ws2tcpip.h>
+#include <sstream>
 
 #include "../DolphinProcess/DolphinAccessor.h"
 #include "../MemoryWatch/MemWatchEntry.h"
@@ -207,20 +208,31 @@ void MainWindow::onUpdateTimer()
       DolphinComm::DolphinAccessor::DolphinStatus::hooked)
     return;
 
-  char data[20];
+  char data[40];
   if (m_isHost)
   {
-    strcpy_s(data, m_memManager->readEntryValue("Coins").c_str());
-    send(m_remoteSocket, data, 20, 0);
+    const char* format = "%s;%s/%s;%s/";
+    sprintf_s(data, format, "Coins", m_memManager->readEntryValue("Coins").c_str(), "Star Points",
+              m_memManager->readEntryValue("Star Points").c_str());
+    send(m_remoteSocket, data, 40, 0);
   }
   else // Client
   {
-    int bytesReceived = recv(m_socket, data, 20, 0);
+    int bytesReceived = recv(m_socket, data, 40, 0);
 
     if (bytesReceived > 0)
     {
       m_lblConnectStatus->setText(data);
-      m_memManager->setEntryValue("Coins", data);
+
+	  std::vector<std::string> entries = customSplit(data, "/");
+
+	  for (int i = 0; i < entries.size(); i++)
+	  {
+            std::string entry = entries[i];
+            std::vector<std::string> parts = customSplit(entry, ";");
+
+            m_memManager->setEntryValue(parts[0], parts[1]);
+	  }
     }
 	else // connection closed
 	{
@@ -228,6 +240,26 @@ void MainWindow::onUpdateTimer()
           m_connectState = CLOSED;
 	}
   }
+}
+
+std::vector<std::string> MainWindow::customSplit(std::string s, std::string delim)
+{
+  std::vector<std::string> parts = {};
+  std::string delimiter = delim;
+
+  size_t pos = 0;
+  std::string token;
+  while ((pos = s.find(delimiter)) != std::string::npos)
+  {
+    token = s.substr(0, pos);
+    parts.push_back(token);
+    s.erase(0, pos + delimiter.length());
+  }
+  if (s.length() > 0)
+  {
+    parts.push_back(s);
+  }
+  return parts;
 }
 
 void MainWindow::onConnectAttempt()

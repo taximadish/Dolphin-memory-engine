@@ -59,6 +59,8 @@ private:
   void initialiseWidgets();
   void makeLayouts();
 
+  std::vector<std::string> customSplit(std::string input, std::string delim);
+
   ConnectState m_connectState;
   int m_socket;
   int m_remoteSocket;
