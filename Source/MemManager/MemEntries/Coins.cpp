@@ -13,21 +13,38 @@ std::string Coins::Name()
   return "Coins";
 }
 
-void Coins::setValue(int32_t value)
+void Coins::setValue(std::string value)
 {
-  if (value > 999)
-    value = 999;
-  if (value < 0)
-    value = 0;
-  m_watch->writeMemoryFromInt(value);
+  int32_t intVal = atoi(value.c_str());
+  if (intVal > 999)
+    value = "999";
+  if (intVal < 0)
+    value = "0";
+  m_watch->writeMemoryFromString(value);
 }
 
-int32_t Coins::getValueAsInt()
-{
-  return atoi(m_watch->getStringFromMemory().c_str());
-}
-
-std::string Coins::getValueAsString()
+std::string Coins::getValue()
 {
   return m_watch->getStringFromMemory();
+}
+
+std::string Coins::getUpdate(std::string hostVal)
+{
+  int32_t currentVal = atoi(m_watch->getStringFromMemory().c_str());
+  int32_t newVal = atoi(hostVal.c_str());
+
+  if (currentVal == newVal)
+  {
+    return NO_UPDATE;
+  }
+
+  return std::to_string(currentVal - newVal);
+}
+
+void Coins::handleUpdate(std::string updateString)
+{
+  int32_t currentVal = atoi(m_watch->getStringFromMemory().c_str());
+  int32_t valToAdd = atoi(updateString.c_str());
+
+  setValue(std::to_string(currentVal + valToAdd));
 }

@@ -8,15 +8,15 @@ MemManager::MemManager()
   m_entries = {};
 
   addEntry(new Coins());
-  /*
-  createEntry("Coins", Common::MemType::type_halfword, POUCH_PTR, std::vector<int32_t>{0x78});
 
+
+  /*
   createEntry("Level", Common::MemType::type_halfword, POUCH_PTR,
               std::vector<int32_t>{0x8A});
 
   createEntry("Star Points", Common::MemType::type_halfword, POUCH_PTR,
               std::vector<int32_t>{0x96});
-			  */
+                          */
 }
 
 void MemManager::addEntry(IMemEntry* entry)
@@ -24,30 +24,31 @@ void MemManager::addEntry(IMemEntry* entry)
   m_entries[entry->Name()] = entry;
 }
 
-void MemManager::setEntryValue(std::string name, int32_t value)
-{
-  m_entries[name]->setValue(value);
-}
-
 void MemManager::setEntryValue(std::string name, std::string value)
 {
   m_entries[name]->setValue(value);
 }
 
-std::string MemManager::readEntryValueAsString(std::string name)
+std::string MemManager::readEntryValue(std::string name)
 {
-  return m_entries[name]->getValueAsString();
+  return m_entries[name]->getValue();
 }
 
-int32_t MemManager::readEntryValueAsInt(std::string name)
+std::string MemManager::getUpdate(std::string name, std::string hostVal)
 {
-  return m_entries[name]->getValueAsInt();
+  return m_entries[name]->getUpdate(hostVal);
+}
+
+void MemManager::handleUpdate(std::string name, std::string updateString)
+{
+  m_entries[name]->handleUpdate(updateString);
 }
 
 std::vector<std::string> MemManager::Keys()
 {
   std::vector<std::string> keys;
-  for (std::map<std::string, IMemEntry*>::iterator it = m_entries.begin(); it != m_entries.end(); ++it)
+  for (std::map<std::string, IMemEntry*>::iterator it = m_entries.begin(); it != m_entries.end();
+       ++it)
   {
     keys.push_back(it->first);
   }

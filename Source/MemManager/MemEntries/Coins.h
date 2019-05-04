@@ -9,10 +9,11 @@ public:
   Coins();
 
   std::string Name() override;
+  void setValue(std::string value) override;
+  std::string getValue() override;
 
-  void setValue(int32_t value) override;
-  int32_t getValueAsInt() override;
-  std::string getValueAsString() override;
+  std::string getUpdate(std::string hostVal) override;
+  void handleUpdate(std::string updateString) override;
 
 private:
   MemWatchEntry* m_watch;

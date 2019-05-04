@@ -13,10 +13,12 @@ public:
   MemManager();
 
   void addEntry(IMemEntry* entry);
-  void setEntryValue(std::string name, int32_t value);
   void setEntryValue(std::string name, std::string value);
-  std::string readEntryValueAsString(std::string name);
-  int32_t readEntryValueAsInt(std::string name);
+  std::string readEntryValue(std::string name);
+
+  std::string getUpdate(std::string name, std::string hostValue);
+  void handleUpdate(std::string name, std::string updateString);
+
   std::vector<std::string> Keys();
 
 private:

@@ -201,6 +201,8 @@ bool MainWindow::teardownConnection()
 
 void MainWindow::onUpdateTimer()
 {
+  static std::map<std::string, int8_t> updateAcks;
+
   if (m_connectState != CONNECTED)
     return;
 
@@ -208,15 +210,52 @@ void MainWindow::onUpdateTimer()
       DolphinComm::DolphinAccessor::DolphinStatus::hooked)
     return;
 
-  if (m_isHost)
+  if (m_isHost) // Host
   {
+	// Handle Update info
+    static std::string storedData = "";
+    fd_set rfds;
+    timeval timeout;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 0;
+
+    FD_ZERO(&rfds);
+    FD_SET(m_remoteSocket, &rfds);
+    int recVal = select(m_remoteSocket + 1, &rfds, NULL, NULL, &timeout);
+    if (recVal > 0) // -1 = Error, 0 = Would Block
+    {
+      const int RECV_SIZE = 1024;
+      char recvData[RECV_SIZE + 1] = {'\0'};
+      int bytesReceived = recv(m_remoteSocket, recvData, RECV_SIZE, 0);
+
+      storedData.append(std::string(recvData));
+
+      int delimPos;
+      while ((delimPos = storedData.find("/")) != std::string::npos) // we have a whole entry
+      {
+        std::string entry = storedData.substr(0, delimPos);
+        storedData = storedData.substr(delimPos + 1);
+        m_lblConnectStatus->setText(entry.c_str());
+
+        std::vector<std::string> parts = customSplit(entry, ";");
+        std::string name = parts[0];
+        int8_t ack = atoi(parts[1].c_str());
+        std::string value = parts[2];
+
+		updateAcks[name] = ack;
+		m_memManager->handleUpdate(name, value);
+	  }
+	}
+
+	// Send current gamestate
     std::string data = "";
     std::vector<std::string> sharedThings = m_memManager->Keys();
     for (int i = 0; i < sharedThings.size(); i++)
     {
-      data.append(sharedThings[i]);
-      data.append(";");
-      data.append(m_memManager->readEntryValueAsString(sharedThings[i]));
+      std::string name = sharedThings[i];
+      data.append(name+";");
+      data.append(std::to_string(updateAcks[name]) + ";");
+      data.append(m_memManager->readEntryValue(name));
       data.append("/");
     }
 	
@@ -224,6 +263,7 @@ void MainWindow::onUpdateTimer()
   }
   else // Client
   {
+    static std::map<std::string, std::string> pastHostValues;
     static std::string storedData = "";
     fd_set rfds;
     timeval timeout;
@@ -250,11 +290,31 @@ void MainWindow::onUpdateTimer()
 
         std::vector<std::string> parts = customSplit(entry, ";");
         std::string name = parts[0];
-        std::string value = parts[1];
+        int8_t ack = atoi(parts[1].c_str());
+        std::string value = parts[2];
 
-		int32_t currentValue = m_memManager->readEntryValueAsInt(name);
-        if (currentValue != atoi(value.c_str()))
+		if (updateAcks[name] != ack)
+          return;
+
+		std::string pastHostVal;
+        if (!pastHostValues.count(name)) // not in map yet
+		{
+          pastHostValues[name] = value;
+		}
+        pastHostVal = pastHostValues[name];
+        std::string localChanges = m_memManager->getUpdate(name, pastHostVal);
+        if (localChanges.length() > 0)
+        {
+          updateAcks[name]++;
+          std::string sendData = name+";";
+          sendData.append(std::to_string(updateAcks[name]) + ";");
+          sendData.append(localChanges);
+          sendData.append("/");
+          send(m_socket, sendData.c_str(), sendData.length(), 0);
+        }
+
         m_memManager->setEntryValue(name, value);
+        pastHostValues[name] = value;
       }
     }
     else // connection closed
