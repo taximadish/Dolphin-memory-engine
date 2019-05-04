@@ -113,7 +113,7 @@ void MainWindow::initialiseWidgets()
   m_txtAddress->setPlaceholderText("IP Address (Default localhost)");
   m_txtAddress->setText("localhost");
   m_txtPort = new QLineEdit();
-  m_txtPort->setPlaceholderText("Port (Default 1400)");
+  m_txtPort->setPlaceholderText("Port (Default 1432)");
   m_btnConnect = new QPushButton(tr("Connect"));
   connect(m_btnConnect, &QPushButton::clicked, this, &MainWindow::onConnectAttempt);
 
@@ -208,37 +208,60 @@ void MainWindow::onUpdateTimer()
       DolphinComm::DolphinAccessor::DolphinStatus::hooked)
     return;
 
-  char data[40];
   if (m_isHost)
   {
-    const char* format = "%s;%s/%s;%s/";
-    sprintf_s(data, format, "Coins", m_memManager->readEntryValue("Coins").c_str(), "Star Points",
-              m_memManager->readEntryValue("Star Points").c_str());
-    send(m_remoteSocket, data, 40, 0);
+    std::string data = "";
+    std::vector<std::string> sharedThings = m_memManager->Keys();
+    for (int i = 0; i < sharedThings.size(); i++)
+    {
+      data.append(sharedThings[i]);
+      data.append(";");
+      data.append(m_memManager->readEntryValueAsString(sharedThings[i]));
+      data.append("/");
+    }
+	
+    send(m_remoteSocket, data.c_str(), data.length(), 0);
   }
   else // Client
   {
-    int bytesReceived = recv(m_socket, data, 40, 0);
+    static std::string storedData = "";
+    fd_set rfds;
+    timeval timeout;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 0;
 
-    if (bytesReceived > 0)
+    FD_ZERO(&rfds);
+    FD_SET(m_socket, &rfds);
+    int recVal = select(m_socket + 1, &rfds, NULL, NULL, &timeout);
+    if (recVal > 0) // -1 = Error, 0 = Would Block
     {
-      m_lblConnectStatus->setText(data);
+      const int RECV_SIZE = 1024;
+      char recvData[RECV_SIZE+1] = {'\0'};
+      int bytesReceived = recv(m_socket, recvData, RECV_SIZE, 0);
 
-	  std::vector<std::string> entries = customSplit(data, "/");
+	  storedData.append(std::string(recvData));
+	  
+      int delimPos;  
+      while ((delimPos = storedData.find("/")) != std::string::npos) // we have a whole value
+      {
+        std::string entry = storedData.substr(0, delimPos + 1);
+        storedData = storedData.substr(delimPos + 1);
+        m_lblConnectStatus->setText(entry.c_str());
 
-	  for (int i = 0; i < entries.size(); i++)
-	  {
-            std::string entry = entries[i];
-            std::vector<std::string> parts = customSplit(entry, ";");
+        std::vector<std::string> parts = customSplit(entry, ";");
+        std::string name = parts[0];
+        std::string value = parts[1];
 
-            m_memManager->setEntryValue(parts[0], parts[1]);
-	  }
+		int32_t currentValue = m_memManager->readEntryValueAsInt(name);
+        if (currentValue != atoi(value.c_str()))
+        m_memManager->setEntryValue(name, value);
+      }
     }
-	else // connection closed
-	{
-          teardownConnection();
-          m_connectState = CLOSED;
-	}
+    else // connection closed
+    {
+    teardownConnection();
+    m_connectState = CLOSED;
+    }
   }
 }
 
@@ -281,7 +304,7 @@ void MainWindow::onChkHostChanged()
 MainWindow::ConnectState MainWindow::createConnection()
 {
   const char* address = "127.0.0.1";
-  int portno = 1400;
+  int portno = 1432;
 
   m_socket = socket(AF_INET, SOCK_STREAM, 0);
   if (m_socket < 0)

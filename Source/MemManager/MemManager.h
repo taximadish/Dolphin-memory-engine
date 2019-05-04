@@ -5,20 +5,20 @@
 
 #include <QString>
 
-#include "../MemoryWatch/MemWatchEntry.h"
+#include "IMemEntry.h"
 
 class MemManager
 {
 public:
   MemManager();
 
-  void createEntry(std::string name, Common::MemType type, int32_t address,
-                   std::vector<int32_t> offsets = {});
-  void addEntry(std::string name, MemWatchEntry* entry);
+  void addEntry(IMemEntry* entry);
   void setEntryValue(std::string name, int32_t value);
   void setEntryValue(std::string name, std::string value);
-  std::string readEntryValue(std::string name);
+  std::string readEntryValueAsString(std::string name);
+  int32_t readEntryValueAsInt(std::string name);
+  std::vector<std::string> Keys();
 
 private:
-  std::map<std::string, MemWatchEntry*> m_entries;
+  std::map<std::string, IMemEntry*> m_entries;
 };
