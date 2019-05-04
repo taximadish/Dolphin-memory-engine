@@ -1,5 +1,8 @@
 #include "MemManager.h"
 #include "MemEntries/Coins.h"
+#include "MemEntries/Shines.h"
+#include "MemEntries/StarPieces.h"
+#include "MemEntries/Items.h"
 
 #define POUCH_PTR 0x8041EB00
 
@@ -8,15 +11,9 @@ MemManager::MemManager()
   m_entries = {};
 
   addEntry(new Coins());
-
-
-  /*
-  createEntry("Level", Common::MemType::type_halfword, POUCH_PTR,
-              std::vector<int32_t>{0x8A});
-
-  createEntry("Star Points", Common::MemType::type_halfword, POUCH_PTR,
-              std::vector<int32_t>{0x96});
-                          */
+  addEntry(new Shines());
+  addEntry(new StarPieces());
+  addEntry(new Items());
 }
 
 void MemManager::addEntry(IMemEntry* entry)
@@ -47,8 +44,7 @@ void MemManager::handleUpdate(std::string name, std::string updateString)
 std::vector<std::string> MemManager::Keys()
 {
   std::vector<std::string> keys;
-  for (std::map<std::string, IMemEntry*>::iterator it = m_entries.begin(); it != m_entries.end();
-       ++it)
+  for (std::map<std::string, IMemEntry*>::iterator it = m_entries.begin(); it != m_entries.end(); ++it)
   {
     keys.push_back(it->first);
   }

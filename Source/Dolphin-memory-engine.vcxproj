@@ -125,6 +125,9 @@
     <ClCompile Include="GUI\Settings\SConfig.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MemManager\MemEntries\Coins.cpp" />
+    <ClCompile Include="MemManager\MemEntries\Items.cpp" />
+    <ClCompile Include="MemManager\MemEntries\Shines.cpp" />
+    <ClCompile Include="MemManager\MemEntries\StarPieces.cpp" />
     <ClCompile Include="MemManager\MemManager.cpp" />
     <ClCompile Include="MemoryScanner\MemoryScanner.cpp" />
     <ClCompile Include="MemoryWatch\MemWatchEntry.cpp" />
@@ -149,6 +152,9 @@
     <ClInclude Include="DolphinProcess\Windows\WindowsDolphinProcess.h" />
     <ClInclude Include="MemManager\IMemEntry.h" />
     <ClInclude Include="MemManager\MemEntries\Coins.h" />
+    <ClInclude Include="MemManager\MemEntries\Items.h" />
+    <ClInclude Include="MemManager\MemEntries\Shines.h" />
+    <ClInclude Include="MemManager\MemEntries\StarPieces.h" />
     <ClInclude Include="MemManager\MemManager.h" />
     <ClInclude Include="MemoryScanner\MemoryScanner.h" />
     <ClInclude Include="MemoryWatch\MemWatchEntry.h" />

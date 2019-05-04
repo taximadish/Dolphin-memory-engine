@@ -284,7 +284,7 @@ void MainWindow::onUpdateTimer()
       int delimPos;  
       while ((delimPos = storedData.find("/")) != std::string::npos) // we have a whole value
       {
-        std::string entry = storedData.substr(0, delimPos + 1);
+        std::string entry = storedData.substr(0, delimPos);
         storedData = storedData.substr(delimPos + 1);
         m_lblConnectStatus->setText(entry.c_str());
 
