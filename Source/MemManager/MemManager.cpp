@@ -1,8 +1,11 @@
 #include "MemManager.h"
+
 #include "MemEntries/Coins.h"
 #include "MemEntries/Shines.h"
 #include "MemEntries/StarPieces.h"
 #include "MemEntries/Items.h"
+#include "MemEntries/StoredItems.h"
+#include "MemEntries/Badges.h"
 
 #define POUCH_PTR 0x8041EB00
 
@@ -10,10 +13,13 @@ MemManager::MemManager()
 {
   m_entries = {};
 
+  // Shared things
   addEntry(new Coins());
   addEntry(new Shines());
   addEntry(new StarPieces());
   addEntry(new Items());
+  addEntry(new StoredItems());
+  addEntry(new Badges());
 }
 
 void MemManager::addEntry(IMemEntry* entry)

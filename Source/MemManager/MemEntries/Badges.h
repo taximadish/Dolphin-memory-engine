@@ -3,10 +3,10 @@
 #include "../IMemEntry.h"
 #include "../../MemoryWatch/MemWatchEntry.h"
 
-class Coins : public IMemEntry
+class Badges : public IMemEntry
 {
 public:
-  Coins();
+  Badges();
 
   std::string Name() override;
   void setValue(std::string value) override;
@@ -16,5 +16,7 @@ public:
   void handleUpdate(std::string updateString) override;
 
 private:
-  MemWatchEntry* m_watch;
+  std::vector<std::string> customSplit(std::string s, std::string delim);
+  std::map<std::string, int8_t> badgeCounts(std::string itemsString);
+  std::vector<MemWatchEntry*> m_watches;
 };
