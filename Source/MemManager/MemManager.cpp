@@ -6,6 +6,7 @@
 #include "MemEntries/Items.h"
 #include "MemEntries/StoredItems.h"
 #include "MemEntries/Badges.h"
+#include "MemEntries/StrangeSack.h"
 
 #define POUCH_PTR 0x8041EB00
 
@@ -20,6 +21,7 @@ MemManager::MemManager()
   addEntry(new Items());
   addEntry(new StoredItems());
   addEntry(new Badges());
+  addEntry(new StrangeSack());
 }
 
 void MemManager::addEntry(IMemEntry* entry)

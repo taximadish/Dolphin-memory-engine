@@ -130,6 +130,7 @@
     <ClCompile Include="MemManager\MemEntries\Shines.cpp" />
     <ClCompile Include="MemManager\MemEntries\StarPieces.cpp" />
     <ClCompile Include="MemManager\MemEntries\StoredItems.cpp" />
+    <ClCompile Include="MemManager\MemEntries\StrangeSack.cpp" />
     <ClCompile Include="MemManager\MemManager.cpp" />
     <ClCompile Include="MemoryScanner\MemoryScanner.cpp" />
     <ClCompile Include="MemoryWatch\MemWatchEntry.cpp" />
@@ -159,6 +160,7 @@
     <ClInclude Include="MemManager\MemEntries\Shines.h" />
     <ClInclude Include="MemManager\MemEntries\StarPieces.h" />
     <ClInclude Include="MemManager\MemEntries\StoredItems.h" />
+    <ClInclude Include="MemManager\MemEntries\StrangeSack.h" />
     <ClInclude Include="MemManager\MemManager.h" />
     <ClInclude Include="MemoryScanner\MemoryScanner.h" />
     <ClInclude Include="MemoryWatch\MemWatchEntry.h" />
