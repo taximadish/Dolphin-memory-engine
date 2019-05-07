@@ -19,5 +19,6 @@ private:
   bool UpdateKeyItems();
   std::vector<MemWatchEntry*> m_watches;
   MemWatchEntry* m_tattlesWatch;
+  MemWatchEntry* m_pausedWatch;
   bool m_givePeekaboo;
 };

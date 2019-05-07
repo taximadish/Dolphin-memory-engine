@@ -19,6 +19,8 @@ StrangeSack::StrangeSack()
   }
   m_tattlesWatch = new MemWatchEntry("Tattles", 0x803DAFBC, Common::MemType::type_byteArray,
                                      Common::MemBase::base_hexadecimal, true, 28);
+
+  m_pausedWatch = new MemWatchEntry("Paused", 0x8041E67b, Common::MemType::type_byte);
 }
 
 std::string StrangeSack::Name()
@@ -64,7 +66,7 @@ void StrangeSack::handleUpdate(std::string updateString)
 
 bool StrangeSack::UpdateKeyItems() // Returns true if definitely have Peekaboo, false means "not sure"
 {  
-  if (HOVERING_OVER_SORT_BUTTON)
+  if (m_pausedWatch->getStringFromMemory() == "1") // Game's paused, player could be Sort-Spamming
     return false;
 
   bool seenStrangeSack = false;
@@ -112,8 +114,9 @@ bool StrangeSack::UpdateKeyItems() // Returns true if definitely have Peekaboo, 
     seenPeekaboo = true;
   }
 
+  size_t max = (numItems > keyItems.size()) ? numItems : keyItems.size();
   // Now to reinstate the items we just kept/gained
-  for (int i = 0; i < numItems; i++)
+  for (int i = 0; i < max; i++)
   {
     if (i < keyItems.size())
 	    m_watches[i]->writeMemoryFromString(keyItems[i]);
