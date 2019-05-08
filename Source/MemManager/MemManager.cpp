@@ -7,6 +7,7 @@
 #include "MemEntries/StoredItems.h"
 #include "MemEntries/Badges.h"
 #include "MemEntries/StrangeSack.h"
+#include "MemEntries/StarPoints.h"
 
 #define POUCH_PTR 0x8041EB00
 
@@ -22,6 +23,7 @@ MemManager::MemManager()
   addEntry(new StoredItems());
   addEntry(new Badges());
   addEntry(new StrangeSack());
+  addEntry(new StarPoints());
 }
 
 void MemManager::addEntry(IMemEntry* entry)
@@ -29,9 +31,9 @@ void MemManager::addEntry(IMemEntry* entry)
   m_entries[entry->Name()] = entry;
 }
 
-void MemManager::setEntryValue(std::string name, std::string value)
+bool MemManager::setEntryValue(std::string name, std::string value)
 {
-  m_entries[name]->setValue(value);
+  return m_entries[name]->setValue(value);
 }
 
 std::string MemManager::readEntryValue(std::string name)

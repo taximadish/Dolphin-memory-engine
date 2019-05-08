@@ -13,7 +13,7 @@ public:
   MemManager();
 
   void addEntry(IMemEntry* entry);
-  void setEntryValue(std::string name, std::string value);
+  bool setEntryValue(std::string name, std::string value);
   std::string readEntryValue(std::string name);
 
   std::string getUpdate(std::string name, std::string hostValue);

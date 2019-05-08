@@ -9,7 +9,7 @@ public:
   StrangeSack();
 
   std::string Name() override;
-  void setValue(std::string value) override;
+  bool setValue(std::string value) override;
   std::string getValue() override;
 
   std::string getUpdate(std::string hostVal) override;

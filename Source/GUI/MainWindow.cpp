@@ -31,6 +31,7 @@ MainWindow::MainWindow()
   connect(m_updateTimer, &QTimer::timeout, this, &MainWindow::onUpdateTimer);
   m_connectState = ConnectState::NOT_CONNECTED;
   m_isHost = false;
+  m_hostingOpen = false;
   updateConnectStatus();
 }
 
@@ -203,6 +204,9 @@ void MainWindow::onUpdateTimer()
 {
   static std::map<std::string, int8_t> updateAcks;
 
+  updateConnectStatus();
+  tryAcceptConnection();
+
   if (m_connectState != CONNECTED)
     return;
 
@@ -214,38 +218,37 @@ void MainWindow::onUpdateTimer()
   {
 	// Handle Update info
     static std::string storedData = "";
-    fd_set rfds;
-    timeval timeout;
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 0;
 
-    FD_ZERO(&rfds);
-    FD_SET(m_remoteSocket, &rfds);
-    int recVal = select(m_remoteSocket + 1, &rfds, NULL, NULL, &timeout);
-    if (recVal > 0) // -1 = Error, 0 = Would Block
+
+	int maxSock = -1;
+    fd_set readSockSet;
+    FD_ZERO(&readSockSet);
+
+    for (int i = 0; i < m_remoteSockets.size(); i++)
     {
-      const int RECV_SIZE = 1024;
-      char recvData[RECV_SIZE + 1] = {'\0'};
-      int bytesReceived = recv(m_remoteSocket, recvData, RECV_SIZE, 0);
+      FD_SET(m_remoteSockets[i], &readSockSet);
+      if (m_remoteSockets[i] > maxSock)
+        maxSock = m_remoteSockets[i];
+    }
 
-      storedData.append(std::string(recvData));
-
-      int delimPos;
-      while ((delimPos = storedData.find("/")) != std::string::npos) // we have a whole entry
+    timeval timeout = {0, 0};
+    int retval = select(maxSock, &readSockSet, NULL, NULL, &timeout);
+    if (retval >= 0)
+    {
+      // iterate backwards in case we need to remove a disconnected client socket
+      for (int i = m_remoteSockets.size() - 1; i >= 0; i--)
       {
-        std::string entry = storedData.substr(0, delimPos);
-        storedData = storedData.substr(delimPos + 1);
-        m_lblConnectStatus->setText(entry.c_str());
-
-        std::vector<std::string> parts = customSplit(entry, ";");
-        std::string name = parts[0];
-        int8_t ack = atoi(parts[1].c_str());
-        std::string value = parts[2];
-
-		updateAcks[name] = ack;
-		m_memManager->handleUpdate(name, value);
-	  }
-	}
+        if (FD_ISSET(m_remoteSockets[i], &readSockSet))
+        {
+          bool stillConnected = hostHandleUpdate(m_remoteSockets[i], &storedData, &updateAcks);
+          if (!stillConnected)
+          {
+            closesocket(m_remoteSockets[i]);
+            m_remoteSockets.erase(m_remoteSockets.begin() + i); // remove closed socket at position i
+          }
+        }
+      }
+    }
 
 	// Send current gamestate
     std::string data = "";
@@ -253,13 +256,19 @@ void MainWindow::onUpdateTimer()
     for (int i = 0; i < sharedThings.size(); i++)
     {
       std::string name = sharedThings[i];
+      std::string newValue = m_memManager->readEntryValue(name);
+      if (newValue == "")
+        continue;
+
       data.append(name+";");
       data.append(std::to_string(updateAcks[name]) + ";");
-      data.append(m_memManager->readEntryValue(name));
-      data.append("/");
+      data.append(newValue + "/");
     }
 	
-    send(m_remoteSocket, data.c_str(), data.length(), 0);
+	for (int i = 0; i < m_remoteSockets.size(); i++)
+	{
+		send(m_remoteSockets[i], data.c_str(), data.length(), 0);
+	}
   }
   else // Client
   {
@@ -278,10 +287,15 @@ void MainWindow::onUpdateTimer()
       const int RECV_SIZE = 1024;
       char recvData[RECV_SIZE+1] = {'\0'};
       int bytesReceived = recv(m_socket, recvData, RECV_SIZE, 0);
+	  if (bytesReceived <= 0)
+	  {
+        teardownConnection();
+        m_connectState = CLOSED;
+	  }
 
 	  storedData.append(std::string(recvData));
 	  
-      int delimPos;  
+      size_t delimPos;  
       while ((delimPos = storedData.find("/")) != std::string::npos) // we have a whole value
       {
         std::string entry = storedData.substr(0, delimPos);
@@ -313,16 +327,41 @@ void MainWindow::onUpdateTimer()
           send(m_socket, sendData.c_str(), sendData.length(), 0);
         }
 
-        m_memManager->setEntryValue(name, value);
-        pastHostValues[name] = value;
+        bool updated = m_memManager->setEntryValue(name, value);
+        if (updated)
+			pastHostValues[name] = value;
       }
     }
-    else // connection closed
-    {
-    teardownConnection();
-    m_connectState = CLOSED;
-    }
   }
+}
+
+bool MainWindow::hostHandleUpdate(int m_remoteSocket, std::string* storedData, std::map<std::string, int8_t>* updateAcks)
+{
+  const int RECV_SIZE = 1024;
+  char recvData[RECV_SIZE + 1] = {'\0'};
+  int bytesReceived = recv(m_remoteSocket, recvData, RECV_SIZE, 0);
+  if (bytesReceived <= 0)
+    return false;
+
+  storedData->append(std::string(recvData));
+
+  size_t delimPos;
+  while ((delimPos = storedData->find("/")) != std::string::npos) // we have a whole entry
+  {
+    std::string entry = storedData->substr(0, delimPos);
+    *storedData = storedData->substr(delimPos + 1);
+    m_lblConnectStatus->setText(entry.c_str());
+
+    std::vector<std::string> parts = customSplit(entry, ";");
+    std::string name = parts[0];
+    int8_t ack = atoi(parts[1].c_str());
+    std::string value = parts[2];
+
+    (*updateAcks)[name] = ack;
+    m_memManager->handleUpdate(name, value);
+  }
+
+  return true;
 }
 
 std::vector<std::string> MainWindow::customSplit(std::string s, std::string delim)
@@ -383,17 +422,9 @@ MainWindow::ConnectState MainWindow::createConnection()
 
 	if (listen(m_socket, SOMAXCONN) != 0)
       return ConnectState::FAILED;
-    
-	// Remote = Client
-	sockaddr_in remoteAddr;
-    int iRemoteAddrLen;
 
-    iRemoteAddrLen = sizeof(remoteAddr);
-    m_remoteSocket = accept(m_socket, (sockaddr*)&remoteAddr, &iRemoteAddrLen);
-    if (m_remoteSocket == INVALID_SOCKET)
-      return ConnectState::FAILED;
-
-	return CONNECTED;
+	m_hostingOpen = true;
+    return CONNECTED;
   }
   else // Client
   {
@@ -401,6 +432,36 @@ MainWindow::ConnectState MainWindow::createConnection()
       return ConnectState::FAILED;
 
 	return CONNECTED;
+  }
+}
+
+void MainWindow::tryAcceptConnection()
+{
+  if (!m_hostingOpen)
+    return;
+
+  int maxSock = -1;
+  fd_set writeSockSet;
+  FD_ZERO(&writeSockSet);
+  FD_SET(m_socket, &writeSockSet); // listenSock will be ready-for-ready when it's time to accept()
+
+  timeval timeout = {0, 0}; // five-second timeout, just to demonstrate
+  int retval = select(m_socket + 1, &writeSockSet, NULL, NULL, &timeout);
+  if (retval > 0)
+  {
+    if (FD_ISSET(m_socket, &writeSockSet))
+    {
+      sockaddr_in remoteAddr;
+      int iRemoteAddrLen;
+
+      iRemoteAddrLen = sizeof(remoteAddr);
+      int remoteSocket = accept(m_socket, (sockaddr*)&remoteAddr, &iRemoteAddrLen);
+
+      if (remoteSocket == INVALID_SOCKET)
+        return;
+
+      m_remoteSockets.push_back(remoteSocket);
+    }
   }
 }
 
@@ -413,10 +474,13 @@ void MainWindow::updateConnectStatus()
     text = "Not Connected";
     break;
   case CONNECTED:
-    text = "Connected!";
+    text = "Connected/Hosting!";
     break;
   case FAILED:
     text = "Connection Failed";
+    break;
+  case CLOSED:
+    text = "Connection Closed";
     break;
   default:
     text = "Unknown connection state?!";

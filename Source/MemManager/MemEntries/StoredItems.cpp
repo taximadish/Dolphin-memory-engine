@@ -21,7 +21,7 @@ std::string StoredItems::Name()
   return "StoredItems";
 }
 
-void StoredItems::setValue(std::string value)
+bool StoredItems::setValue(std::string value)
 {
   std::vector<std::string> parts = customSplit(value, ",");
   for (int i = 0; i < MAX_ITEMS; i++)
@@ -35,6 +35,7 @@ void StoredItems::setValue(std::string value)
       m_watches[i]->writeMemoryFromString("0");
 	}
   }
+  return true;
 }
 
 std::string StoredItems::getValue()

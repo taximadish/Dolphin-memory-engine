@@ -28,12 +28,13 @@ std::string StrangeSack::Name()
   return "StrangeSack";
 }
 
-void StrangeSack::setValue(std::string value)
+bool StrangeSack::setValue(std::string value)
 {
   if (value == "P")
     m_givePeekaboo = true;
 
   UpdateKeyItems();
+  return true;
 }
 
 std::string StrangeSack::getValue()

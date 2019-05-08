@@ -14,6 +14,8 @@ Items::Items()
 
 	m_watches.push_back(watch);
   }
+  
+  m_pausedWatch = new MemWatchEntry("Paused", 0x8041E67b, Common::MemType::type_byte);
 }
 
 std::string Items::Name()
@@ -21,8 +23,10 @@ std::string Items::Name()
   return "Items";
 }
 
-void Items::setValue(std::string value)
+bool Items::setValue(std::string value)
 {
+  if (false)//IsPaused())
+    return false;
   std::vector<std::string> parts = customSplit(value, ",");
   for (int i = 0; i < MAX_ITEMS; i++)
   {
@@ -35,6 +39,7 @@ void Items::setValue(std::string value)
       m_watches[i]->writeMemoryFromString("0");
 	}
   }
+  return true;
 }
 
 std::string Items::getValue()
@@ -160,4 +165,10 @@ std::map<std::string, int8_t> Items::itemCounts(std::string itemsString)
       itemCounts[items[i]]++;
   }
   return itemCounts;
+}
+
+bool Items::IsPaused()
+{
+  std::string paused = m_pausedWatch->getStringFromMemory();
+  return paused == "1";
 }

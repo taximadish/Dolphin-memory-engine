@@ -13,7 +13,7 @@ std::string Shines::Name()
   return "Shines";
 }
 
-void Shines::setValue(std::string value)
+bool Shines::setValue(std::string value)
 {
   int32_t intVal = atoi(value.c_str());
   if (intVal > 999)
@@ -21,6 +21,7 @@ void Shines::setValue(std::string value)
   if (intVal < 0)
     value = "0";
   m_watch->writeMemoryFromString(value);
+  return true;
 }
 
 std::string Shines::getValue()

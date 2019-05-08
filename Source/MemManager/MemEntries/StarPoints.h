@@ -3,10 +3,10 @@
 #include "../IMemEntry.h"
 #include "../../MemoryWatch/MemWatchEntry.h"
 
-class Coins : public IMemEntry
+class StarPoints : public IMemEntry
 {
 public:
-  Coins();
+  StarPoints();
 
   std::string Name() override;
   bool setValue(std::string value) override;
@@ -16,5 +16,8 @@ public:
   void handleUpdate(std::string updateString) override;
 
 private:
+  bool InBattle();
   MemWatchEntry* m_watch;
+  MemWatchEntry* m_levelWatch;
+  MemWatchEntry* m_battleWatch;
 };

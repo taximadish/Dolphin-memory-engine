@@ -13,7 +13,7 @@ std::string Coins::Name()
   return "Coins";
 }
 
-void Coins::setValue(std::string value)
+bool Coins::setValue(std::string value)
 {
   int32_t intVal = atoi(value.c_str());
   if (intVal > 999)
@@ -21,6 +21,7 @@ void Coins::setValue(std::string value)
   if (intVal < 0)
     value = "0";
   m_watch->writeMemoryFromString(value);
+  return true;
 }
 
 std::string Coins::getValue()

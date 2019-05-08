@@ -14,6 +14,8 @@ Badges::Badges()
 
 	m_watches.push_back(watch);
   }
+  
+  m_pausedWatch = new MemWatchEntry("Paused", 0x8041E67b, Common::MemType::type_byte);
 }
 
 std::string Badges::Name()
@@ -21,8 +23,10 @@ std::string Badges::Name()
   return "Badges";
 }
 
-void Badges::setValue(std::string value)
+bool Badges::setValue(std::string value)
 {
+  if (IsPaused())
+    return false;
   std::vector<std::string> parts = customSplit(value, ",");
   for (int i = 0; i < MAX_BADGES; i++)
   {
@@ -35,6 +39,7 @@ void Badges::setValue(std::string value)
       m_watches[i]->writeMemoryFromString("0");
 	}
   }
+  return true;
 }
 
 std::string Badges::getValue()
@@ -111,7 +116,7 @@ void Badges::handleUpdate(std::string updateString)
 	}
 	else
 	{
-          newBadges.append(item + ",");
+      newBadges.append(item + ",");
 	}
   }
 
@@ -160,4 +165,10 @@ std::map<std::string, int8_t> Badges::badgeCounts(std::string badgesString)
       itemCounts[badges[i]]++;
   }
   return itemCounts;
+}
+
+bool Badges::IsPaused()
+{
+  std::string paused = m_pausedWatch->getStringFromMemory();
+  return paused == "1";
 }

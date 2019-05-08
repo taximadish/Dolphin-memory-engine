@@ -59,11 +59,14 @@ private:
   void initialiseWidgets();
   void makeLayouts();
 
+  void tryAcceptConnection();
+  bool hostHandleUpdate(int socket, std::string* storedData, std::map<std::string, int8_t>* updateAcks);
+
   std::vector<std::string> customSplit(std::string input, std::string delim);
 
   ConnectState m_connectState;
   int m_socket;
-  int m_remoteSocket;
+  std::vector<int> m_remoteSockets;
 
   MemWatchWidget* m_watcher;
 
@@ -79,6 +82,7 @@ private:
   QTimer* m_updateTimer;
   QLabel* m_lblConnectStatus;
   bool m_isHost;
+  bool m_hostingOpen;
   QCheckBox* m_chkHost;
   QLineEdit* m_txtAddress;
   QLineEdit* m_txtPort;

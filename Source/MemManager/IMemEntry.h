@@ -14,7 +14,7 @@ class IMemEntry
 {
 public:
   virtual std::string Name() = 0;
-  virtual void setValue(std::string value) = 0;
+  virtual bool setValue(std::string value) = 0;
   virtual std::string getValue() = 0;
 
   virtual std::string getUpdate(std::string hostVal) = 0;
