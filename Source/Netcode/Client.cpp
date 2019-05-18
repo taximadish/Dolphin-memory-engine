@@ -99,7 +99,7 @@ bool Client::createConnection(std::string address, int portno)
   if (address == "localhost")
     address = "127.0.0.1";
   if (portno == 0)
-	  portno = 1432;
+	  portno = 14321;
 
   m_socket = socket(AF_INET, SOCK_STREAM, 0);
   if (m_socket < 0)

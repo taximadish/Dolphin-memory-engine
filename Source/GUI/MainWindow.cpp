@@ -112,8 +112,8 @@ void MainWindow::initialiseWidgets()
   m_txtAddress->setPlaceholderText("IP Address (Default localhost)");
   m_txtAddress->setText("localhost");
   m_txtPort = new QLineEdit();
-  m_txtPort->setPlaceholderText("Port (Default 1432)");
-  m_txtPort->setText("1432");
+  m_txtPort->setPlaceholderText("Port (Default 14321)");
+  m_txtPort->setText("14321");
   m_btnConnect = new QPushButton(tr("Connect"));
   connect(m_btnConnect, &QPushButton::clicked, this, &MainWindow::onConnectAttempt);
 

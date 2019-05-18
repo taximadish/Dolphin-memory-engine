@@ -96,10 +96,8 @@ bool Server::start(int portno)
 
 bool Server::createConnection(int portno)
 {
-  const char* address = "127.0.0.1";
-
   if (portno == 0)
-	  portno = 1432;
+	  portno = 14321;
 
   m_socket = socket(AF_INET, SOCK_STREAM, 0);
   if (m_socket < 0)
@@ -109,7 +107,7 @@ bool Server::createConnection(int portno)
   sockaddr_in sockAddr;
   sockAddr.sin_family = AF_INET;
   sockAddr.sin_port = htons(portno);
-  inet_pton(AF_INET, address, &sockAddr.sin_addr.S_un.S_addr);
+  sockAddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     if (::bind(m_socket, (sockaddr*)(&sockAddr), sizeof(sockAddr)) != 0)
       return false;
