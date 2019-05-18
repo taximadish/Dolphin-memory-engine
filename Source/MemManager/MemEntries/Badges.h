@@ -6,14 +6,14 @@
 class Badges : public IMemEntry
 {
 public:
-  Badges();
+  Badges(bool serverMode);
 
   std::string Name() override;
-  bool setValue(std::string value) override;
-  std::string getValue() override;
+  std::string setValue(std::string value) override;
+  std::string hostGetValue() override;
 
   std::string getUpdate(std::string hostVal) override;
-  void handleUpdate(std::string updateString) override;
+  void hostHandleUpdate(std::string updateString) override;
 
 private:
   bool IsPaused();
@@ -21,4 +21,5 @@ private:
   std::map<std::string, int8_t> badgeCounts(std::string itemsString);
   std::vector<MemWatchEntry*> m_watches;
   MemWatchEntry* m_pausedWatch;
+  std::string m_hostValue;
 };

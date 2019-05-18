@@ -3,10 +3,10 @@
 #include "../IMemEntry.h"
 #include "../../MemoryWatch/MemWatchEntry.h"
 
-class StarPieces : public IMemEntry
+class ShopPoints : public IMemEntry
 {
 public:
-  StarPieces(bool serverMode);
+  ShopPoints(bool serverMode);
 
   std::string Name() override;
   std::string setValue(std::string value) override;

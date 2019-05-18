@@ -24,15 +24,14 @@ MainWindow::MainWindow()
   DolphinComm::DolphinAccessor::init();
   updateDolphinHookingStatus();
 
-  m_memManager = new MemManager();
   m_updateTimer = new QTimer(this);
   m_updateTimer->setInterval(100);
   m_updateTimer->start();
   connect(m_updateTimer, &QTimer::timeout, this, &MainWindow::onUpdateTimer);
-  m_connectState = ConnectState::NOT_CONNECTED;
-  m_isHost = false;
-  m_hostingOpen = false;
+  m_server = new Server();
+  m_client = new Client();
   updateConnectStatus();
+  updateServerStatus();
 }
 
 MainWindow::~MainWindow()
@@ -96,7 +95,6 @@ void MainWindow::makeMenus()
 
 void MainWindow::initialiseWidgets()
 {
-
   m_watcher = new MemWatchWidget(this);
 
   m_btnAttempHook = new QPushButton(tr("Hook"));
@@ -107,14 +105,15 @@ void MainWindow::initialiseWidgets()
   m_txtProcessNum->setPlaceholderText("Process Number (Default 1)");
   m_txtProcessNum->setText("1");
 
-  m_chkHost = new QCheckBox();
-  m_chkHost->setText("Host");
-  connect(m_chkHost, &QCheckBox::stateChanged, this, &MainWindow::onChkHostChanged);
+  m_btnStartServer = new QPushButton(tr("Start Server"));
+  connect(m_btnStartServer, &QPushButton::clicked, this, &MainWindow::onStartServerAttempt);
+
   m_txtAddress = new QLineEdit();
   m_txtAddress->setPlaceholderText("IP Address (Default localhost)");
   m_txtAddress->setText("localhost");
   m_txtPort = new QLineEdit();
   m_txtPort->setPlaceholderText("Port (Default 1432)");
+  m_txtPort->setText("1432");
   m_btnConnect = new QPushButton(tr("Connect"));
   connect(m_btnConnect, &QPushButton::clicked, this, &MainWindow::onConnectAttempt);
 
@@ -126,17 +125,20 @@ void MainWindow::initialiseWidgets()
 
   m_lblConnectStatus = new QLabel("");
   m_lblConnectStatus->setAlignment(Qt::AlignRight);
+
+  m_lblServerStatus = new QLabel("");
+  m_lblServerStatus->setAlignment(Qt::AlignLeft);
 }
 
 void MainWindow::makeLayouts()
 {
   QHBoxLayout* dolphinHookButtons_layout = new QHBoxLayout();
-  dolphinHookButtons_layout->addWidget(m_txtProcessNum);
   dolphinHookButtons_layout->addWidget(m_btnAttempHook);
   dolphinHookButtons_layout->addWidget(m_btnUnhook);
+  dolphinHookButtons_layout->addWidget(m_txtProcessNum);
 
   QHBoxLayout* socketSettings_layout = new QHBoxLayout();
-  socketSettings_layout->addWidget(m_chkHost);
+  socketSettings_layout->addWidget(m_btnStartServer);
   socketSettings_layout->addWidget(m_txtAddress);
   socketSettings_layout->addWidget(m_txtPort);
   socketSettings_layout->addWidget(m_btnConnect);
@@ -148,6 +150,7 @@ void MainWindow::makeLayouts()
   mainLayout->addSpacing(20);
   mainLayout->addWidget(m_lblConnectStatus);
   mainLayout->addLayout(socketSettings_layout);
+  mainLayout->addWidget(m_lblServerStatus);
   mainLayout->addSpacing(20);
   mainLayout->addWidget(m_watcher);
 
@@ -172,323 +175,65 @@ void MainWindow::updateMem2Status()
     m_lblMem2Status->setText(tr("The extended Wii-only memory is absent"));
 }
 
-
-
-MainWindow::ConnectState MainWindow::initConnection()
-{
-  const int iReqWinsockVer = 2; // Minimum winsock version required
-
-  WSADATA wsaData;
-
-  if (WSAStartup(MAKEWORD(iReqWinsockVer, 0), &wsaData) == 0)
-  {
-    // Check if major version is at least iReqWinsockVer
-    if (LOBYTE(wsaData.wVersion) >= iReqWinsockVer)
-      return createConnection();
-    else
-      return ConnectState::FAILED;
-  }
-  else
-  {
-    return ConnectState::FAILED;
-  }
-}
-
-bool MainWindow::teardownConnection()
-{
-  closesocket(m_socket);
-  return WSACleanup();
-}
-
 void MainWindow::onUpdateTimer()
 {
-  static std::map<std::string, int8_t> updateAcks;
-
   updateConnectStatus();
-  tryAcceptConnection();
+  updateServerStatus();
 
-  if (m_connectState != CONNECTED)
-    return;
-
-  if (DolphinComm::DolphinAccessor::getStatus() !=
+  m_server->update();
+  if (DolphinComm::DolphinAccessor::getStatus() ==
       DolphinComm::DolphinAccessor::DolphinStatus::hooked)
-    return;
-
-  if (m_isHost) // Host
-  {
-	// Handle Update info
-    static std::string storedData = "";
-
-
-	int maxSock = -1;
-    fd_set readSockSet;
-    FD_ZERO(&readSockSet);
-
-    for (int i = 0; i < m_remoteSockets.size(); i++)
-    {
-      FD_SET(m_remoteSockets[i], &readSockSet);
-      if (m_remoteSockets[i] > maxSock)
-        maxSock = m_remoteSockets[i];
-    }
-
-    timeval timeout = {0, 0};
-    int retval = select(maxSock, &readSockSet, NULL, NULL, &timeout);
-    if (retval >= 0)
-    {
-      // iterate backwards in case we need to remove a disconnected client socket
-      for (int i = m_remoteSockets.size() - 1; i >= 0; i--)
-      {
-        if (FD_ISSET(m_remoteSockets[i], &readSockSet))
-        {
-          bool stillConnected = hostHandleUpdate(m_remoteSockets[i], &storedData, &updateAcks);
-          if (!stillConnected)
-          {
-            closesocket(m_remoteSockets[i]);
-            m_remoteSockets.erase(m_remoteSockets.begin() + i); // remove closed socket at position i
-          }
-        }
-      }
-    }
-
-	// Send current gamestate
-    std::string data = "";
-    std::vector<std::string> sharedThings = m_memManager->Keys();
-    for (int i = 0; i < sharedThings.size(); i++)
-    {
-      std::string name = sharedThings[i];
-      std::string newValue = m_memManager->readEntryValue(name);
-      if (newValue == "")
-        continue;
-
-      data.append(name+";");
-      data.append(std::to_string(updateAcks[name]) + ";");
-      data.append(newValue + "/");
-    }
-	
-	for (int i = 0; i < m_remoteSockets.size(); i++)
-	{
-		send(m_remoteSockets[i], data.c_str(), data.length(), 0);
+	 {
+    m_client->update();
 	}
-  }
-  else // Client
-  {
-    static std::map<std::string, std::string> pastHostValues;
-    static std::string storedData = "";
-    fd_set rfds;
-    timeval timeout;
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 0;
-
-    FD_ZERO(&rfds);
-    FD_SET(m_socket, &rfds);
-    int recVal = select(m_socket + 1, &rfds, NULL, NULL, &timeout);
-    if (recVal > 0) // -1 = Error, 0 = Would Block
-    {
-      const int RECV_SIZE = 1024;
-      char recvData[RECV_SIZE+1] = {'\0'};
-      int bytesReceived = recv(m_socket, recvData, RECV_SIZE, 0);
-	  if (bytesReceived <= 0)
-	  {
-        teardownConnection();
-        m_connectState = CLOSED;
-	  }
-
-	  storedData.append(std::string(recvData));
-	  
-      size_t delimPos;  
-      while ((delimPos = storedData.find("/")) != std::string::npos) // we have a whole value
-      {
-        std::string entry = storedData.substr(0, delimPos);
-        storedData = storedData.substr(delimPos + 1);
-        m_lblConnectStatus->setText(entry.c_str());
-
-        std::vector<std::string> parts = customSplit(entry, ";");
-        std::string name = parts[0];
-        int8_t ack = atoi(parts[1].c_str());
-        std::string value = parts[2];
-
-		if (updateAcks[name] != ack)
-          return;
-
-		std::string pastHostVal;
-        if (!pastHostValues.count(name)) // not in map yet
-		{
-          pastHostValues[name] = value;
-		}
-        pastHostVal = pastHostValues[name];
-        std::string localChanges = m_memManager->getUpdate(name, pastHostVal);
-        if (localChanges.length() > 0)
-        {
-          updateAcks[name]++;
-          std::string sendData = name+";";
-          sendData.append(std::to_string(updateAcks[name]) + ";");
-          sendData.append(localChanges);
-          sendData.append("/");
-          send(m_socket, sendData.c_str(), sendData.length(), 0);
-        }
-
-        bool updated = m_memManager->setEntryValue(name, value);
-        if (updated)
-			pastHostValues[name] = value;
-      }
-    }
-  }
-}
-
-bool MainWindow::hostHandleUpdate(int m_remoteSocket, std::string* storedData, std::map<std::string, int8_t>* updateAcks)
-{
-  const int RECV_SIZE = 1024;
-  char recvData[RECV_SIZE + 1] = {'\0'};
-  int bytesReceived = recv(m_remoteSocket, recvData, RECV_SIZE, 0);
-  if (bytesReceived <= 0)
-    return false;
-
-  storedData->append(std::string(recvData));
-
-  size_t delimPos;
-  while ((delimPos = storedData->find("/")) != std::string::npos) // we have a whole entry
-  {
-    std::string entry = storedData->substr(0, delimPos);
-    *storedData = storedData->substr(delimPos + 1);
-    m_lblConnectStatus->setText(entry.c_str());
-
-    std::vector<std::string> parts = customSplit(entry, ";");
-    std::string name = parts[0];
-    int8_t ack = atoi(parts[1].c_str());
-    std::string value = parts[2];
-
-    (*updateAcks)[name] = ack;
-    m_memManager->handleUpdate(name, value);
-  }
-
-  return true;
-}
-
-std::vector<std::string> MainWindow::customSplit(std::string s, std::string delim)
-{
-  std::vector<std::string> parts = {};
-  std::string delimiter = delim;
-
-  size_t pos = 0;
-  std::string token;
-  while ((pos = s.find(delimiter)) != std::string::npos)
-  {
-    token = s.substr(0, pos);
-    parts.push_back(token);
-    s.erase(0, pos + delimiter.length());
-  }
-  if (s.length() > 0)
-  {
-    parts.push_back(s);
-  }
-  return parts;
 }
 
 void MainWindow::onConnectAttempt()
 {
-  teardownConnection();
-  m_connectState = initConnection();
-  updateConnectStatus();
+  if (m_client->m_running)
+	  m_client->stop();
+  else
+    m_client->start(m_txtAddress->text().toStdString(), atoi(m_txtPort->text().toStdString().c_str()));
 }
 
-void MainWindow::onChkHostChanged()
+void MainWindow::onStartServerAttempt()
 {
-  if (m_connectState != CONNECTED)
-  {
-    m_isHost = m_chkHost->isChecked();
-    m_lblDolphinStatus->setText(m_isHost ? "Host" : "Client");
-  }
-}
-
-MainWindow::ConnectState MainWindow::createConnection()
-{
-  const char* address = "127.0.0.1";
-  int portno = 1432;
-
-  m_socket = socket(AF_INET, SOCK_STREAM, 0);
-  if (m_socket < 0)
-    return ConnectState::FAILED;
-  
-  // Binding info
-  sockaddr_in sockAddr;
-  sockAddr.sin_family = AF_INET;
-  sockAddr.sin_port = htons(portno);
-  inet_pton(AF_INET, address, &sockAddr.sin_addr.S_un.S_addr);
-
-  if (m_isHost)
-  {
-    if (::bind(m_socket, (sockaddr*)(&sockAddr), sizeof(sockAddr)) != 0)
-      return ConnectState::FAILED;
-
-	if (listen(m_socket, SOMAXCONN) != 0)
-      return ConnectState::FAILED;
-
-	m_hostingOpen = true;
-    return CONNECTED;
-  }
-  else // Client
-  {
-    if (::connect(m_socket, (struct sockaddr*)&sockAddr, sizeof(sockAddr)) < 0)
-      return ConnectState::FAILED;
-
-	return CONNECTED;
-  }
-}
-
-void MainWindow::tryAcceptConnection()
-{
-  if (!m_hostingOpen)
-    return;
-
-  int maxSock = -1;
-  fd_set writeSockSet;
-  FD_ZERO(&writeSockSet);
-  FD_SET(m_socket, &writeSockSet); // listenSock will be ready-for-ready when it's time to accept()
-
-  timeval timeout = {0, 0}; // five-second timeout, just to demonstrate
-  int retval = select(m_socket + 1, &writeSockSet, NULL, NULL, &timeout);
-  if (retval > 0)
-  {
-    if (FD_ISSET(m_socket, &writeSockSet))
-    {
-      sockaddr_in remoteAddr;
-      int iRemoteAddrLen;
-
-      iRemoteAddrLen = sizeof(remoteAddr);
-      int remoteSocket = accept(m_socket, (sockaddr*)&remoteAddr, &iRemoteAddrLen);
-
-      if (remoteSocket == INVALID_SOCKET)
-        return;
-
-      m_remoteSockets.push_back(remoteSocket);
-    }
-  }
+  if (m_server->m_running)
+    m_server->stop();
+  else
+    m_server->start(atoi(qPrintable(m_txtPort->text())));
 }
 
 void MainWindow::updateConnectStatus()
 {
   const char* text;
-  switch (m_connectState)
+  switch (m_client->m_running)
   {
-  case NOT_CONNECTED:
-    text = "Not Connected";
-    break;
-  case CONNECTED:
-    text = "Connected/Hosting!";
-    break;
-  case FAILED:
-    text = "Connection Failed";
-    break;
-  case CLOSED:
-    text = "Connection Closed";
+  case true:
+    text = "Connected!";
     break;
   default:
-    text = "Unknown connection state?!";
+    text = "Not Connected";
     break;
   }
   m_lblConnectStatus->setText(tr(text));
 }
 
+void MainWindow::updateServerStatus()
+{
+  std::string text;
+  switch (m_server->m_running)
+  {
+  case true:
+    text = "Server running on Port ";
+    text.append(std::to_string(m_server->m_port));
+    break;
+  default:
+    text = "Server not Running";
+    break;
+  }
+  m_lblServerStatus->setText(tr(text.c_str()));
+}
 
 
 void MainWindow::updateDolphinHookingStatus()

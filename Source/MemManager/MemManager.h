@@ -10,14 +10,14 @@
 class MemManager
 {
 public:
-  MemManager();
+  MemManager(bool serverMode);
 
   void addEntry(IMemEntry* entry);
-  bool setEntryValue(std::string name, std::string value);
-  std::string readEntryValue(std::string name);
+  std::string setEntryValue(std::string name, std::string value);
+  std::string hostGetEntryValue(std::string name);
 
   std::string getUpdate(std::string name, std::string hostValue);
-  void handleUpdate(std::string name, std::string updateString);
+  void hostHandleUpdate(std::string name, std::string updateString);
 
   std::vector<std::string> Keys();
 

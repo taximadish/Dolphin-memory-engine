@@ -4,18 +4,25 @@
 #define FIRST_BADGE_OFFSET	(0x1FA)
 #define BADGE_SIZE_BYTES		(2)
 
-Badges::Badges()
-{ 
-  for (int i = 0; i < MAX_BADGES; i++)
+Badges::Badges(bool serverMode)
+{
+  if (serverMode)
   {
-    MemWatchEntry* watch = new MemWatchEntry(Name().c_str(), POUCH_PTR, Common::MemType::type_halfword);
-    watch->setBoundToPointer(true);
-    watch->addOffset(FIRST_BADGE_OFFSET + (i * BADGE_SIZE_BYTES));
-
-	m_watches.push_back(watch);
+    m_hostValue = "0";
   }
+  else
+  {
+	  for (int i = 0; i < MAX_BADGES; i++)
+	  {
+		MemWatchEntry* watch = new MemWatchEntry(Name().c_str(), POUCH_PTR, Common::MemType::type_halfword);
+		watch->setBoundToPointer(true);
+		watch->addOffset(FIRST_BADGE_OFFSET + (i * BADGE_SIZE_BYTES));
+
+		m_watches.push_back(watch);
+	  }
   
-  m_pausedWatch = new MemWatchEntry("Paused", 0x8041E67b, Common::MemType::type_byte);
+	  m_pausedWatch = new MemWatchEntry("Paused", 0x8041E67b, Common::MemType::type_byte);
+  }
 }
 
 std::string Badges::Name()
@@ -23,10 +30,10 @@ std::string Badges::Name()
   return "Badges";
 }
 
-bool Badges::setValue(std::string value)
+std::string Badges::setValue(std::string value)
 {
   if (IsPaused())
-    return false;
+    return COULD_NOT_SET;
   std::vector<std::string> parts = customSplit(value, ",");
   for (int i = 0; i < MAX_BADGES; i++)
   {
@@ -39,29 +46,18 @@ bool Badges::setValue(std::string value)
       m_watches[i]->writeMemoryFromString("0");
 	}
   }
-  return true;
+  return value;
 }
 
-std::string Badges::getValue()
+std::string Badges::hostGetValue()
 {
-  std::string value = "";
-  for (int i = 0; i < MAX_BADGES; i++)
-  {
-    std::string item = m_watches[i]->getStringFromMemory();
-    if (item == "0")
-      break;
-    value.append(item+",");
-  }
-
-  value.append("0");
-
-  return value;
+  return m_hostValue;
 }
 
 std::string Badges::getUpdate(std::string hostVal)
 {
   std::map<std::string, int8_t> hostCounts = badgeCounts(hostVal);
-  std::map<std::string, int8_t> myCounts = badgeCounts(getValue());
+  std::map<std::string, int8_t> myCounts = badgeCounts(hostGetValue());
 
   std::string diffs = "";
   // Host Badges
@@ -91,7 +87,7 @@ std::string Badges::getUpdate(std::string hostVal)
   return diffs;
 }
 
-void Badges::handleUpdate(std::string updateString)
+void Badges::hostHandleUpdate(std::string updateString)
 {
   std::map<std::string, int8_t> diffs;
   std::vector<std::string> updates = customSplit(updateString, ",");
@@ -101,7 +97,7 @@ void Badges::handleUpdate(std::string updateString)
     diffs[parts[0]] = atoi(parts[1].c_str());
   }
 
-  std::vector<std::string> currentBadges = customSplit(getValue(), ",");
+  std::vector<std::string> currentBadges = customSplit(hostGetValue(), ",");
 
   std::string newBadges = "";
   for (int i = 0; i < currentBadges.size(); i++) // Keep or discard current badges appropriately
@@ -130,7 +126,7 @@ void Badges::handleUpdate(std::string updateString)
   }
 
  newBadges.append("0");
-  setValue(newBadges);
+  m_hostValue = newBadges;
 }
 
 

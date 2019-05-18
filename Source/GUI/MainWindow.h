@@ -11,6 +11,8 @@
 #include "MemViewer/MemViewerWidget.h"
 #include "MemWatcher/MemWatchWidget.h"
 #include "../MemManager/MemManager.h"
+#include "../Netcode/Server.h"
+#include "../Netcode/Client.h"
 
 class MainWindow : public QMainWindow
 {
@@ -36,13 +38,11 @@ public:
   void onUnhook();
   void updateMem2Status();
 
+  void updateServerStatus();
+  void onStartServerAttempt();
   void updateConnectStatus();
   void onConnectAttempt();
-  ConnectState initConnection();
-  bool teardownConnection();
-  ConnectState createConnection();
   void onUpdateTimer();
-  void onChkHostChanged();
 
   void onOpenWatchFile();
   void onSaveWatchFile();
@@ -59,15 +59,6 @@ private:
   void initialiseWidgets();
   void makeLayouts();
 
-  void tryAcceptConnection();
-  bool hostHandleUpdate(int socket, std::string* storedData, std::map<std::string, int8_t>* updateAcks);
-
-  std::vector<std::string> customSplit(std::string input, std::string delim);
-
-  ConnectState m_connectState;
-  int m_socket;
-  std::vector<int> m_remoteSockets;
-
   MemWatchWidget* m_watcher;
 
   QLabel* m_lblDolphinStatus;
@@ -75,15 +66,13 @@ private:
   QLineEdit* m_txtProcessNum;
   QPushButton* m_btnUnhook;
   QLabel* m_lblMem2Status;
+  QPushButton* m_btnStartServer;
+  Server* m_server;
+  Client* m_client;
 
-
-
-  MemManager* m_memManager;
   QTimer* m_updateTimer;
   QLabel* m_lblConnectStatus;
-  bool m_isHost;
-  bool m_hostingOpen;
-  QCheckBox* m_chkHost;
+  QLabel* m_lblServerStatus;
   QLineEdit* m_txtAddress;
   QLineEdit* m_txtPort;
   QPushButton* m_btnConnect;

@@ -1,11 +1,18 @@
 #include "Coins.h"
 
-Coins::Coins()
+Coins::Coins(bool serverMode)
 { 
-  m_watch = new MemWatchEntry(Name().c_str(), POUCH_PTR, Common::MemType::type_halfword);
+  if (serverMode)
+  {
+	m_hostValue = 0;
+  }
+  else
+  {
+	m_watch = new MemWatchEntry(Name().c_str(), POUCH_PTR, Common::MemType::type_halfword);
 
-  m_watch->setBoundToPointer(true);
-  m_watch->addOffset(0x78);
+	m_watch->setBoundToPointer(true);
+	m_watch->addOffset(0x78);
+  }
 }
 
 std::string Coins::Name()
@@ -13,20 +20,16 @@ std::string Coins::Name()
   return "Coins";
 }
 
-bool Coins::setValue(std::string value)
+std::string Coins::setValue(std::string value)
 {
   int32_t intVal = atoi(value.c_str());
-  if (intVal > 999)
-    value = "999";
-  if (intVal < 0)
-    value = "0";
   m_watch->writeMemoryFromString(value);
-  return true;
+  return value;
 }
 
-std::string Coins::getValue()
+std::string Coins::hostGetValue()
 {
-  return m_watch->getStringFromMemory();
+  return std::to_string(m_hostValue);
 }
 
 std::string Coins::getUpdate(std::string hostVal)
@@ -42,10 +45,14 @@ std::string Coins::getUpdate(std::string hostVal)
   return std::to_string(currentVal - newVal);
 }
 
-void Coins::handleUpdate(std::string updateString)
+void Coins::hostHandleUpdate(std::string updateString)
 {
-  int32_t currentVal = atoi(m_watch->getStringFromMemory().c_str());
   int32_t valToAdd = atoi(updateString.c_str());
 
-  setValue(std::to_string(currentVal + valToAdd));
+  m_hostValue = m_hostValue + valToAdd;
+  if (m_hostValue > 999)
+    m_hostValue = 999;
+  
+  if (m_hostValue < 0)
+    m_hostValue = 0;
 }

@@ -128,6 +128,7 @@
     <ClCompile Include="MemManager\MemEntries\Coins.cpp" />
     <ClCompile Include="MemManager\MemEntries\Items.cpp" />
     <ClCompile Include="MemManager\MemEntries\Shines.cpp" />
+    <ClCompile Include="MemManager\MemEntries\ShopPoints.cpp" />
     <ClCompile Include="MemManager\MemEntries\StarPieces.cpp" />
     <ClCompile Include="MemManager\MemEntries\StarPoints.cpp" />
     <ClCompile Include="MemManager\MemEntries\StoredItems.cpp" />
@@ -144,9 +145,23 @@
     <ClCompile Include="GeneratedFiles\$(Configuration)\moc_MemWatchModel.cpp" />
     <ClCompile Include="GeneratedFiles\$(Configuration)\moc_MemWatchWidget.cpp" />
     <ClCompile Include="GeneratedFiles\$(Configuration)\moc_ResultsListModel.cpp" />
+    <ClCompile Include="Netcode\Client.cpp" />
+    <ClCompile Include="Netcode\Server.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CheatEngineParser\CheatEngineParser.h" />
+    <ClInclude Include="MemManager\IMemEntry.h" />
+    <ClInclude Include="MemManager\MemEntries\Badges.h" />
+    <ClInclude Include="MemManager\MemEntries\Coins.h" />
+    <ClInclude Include="MemManager\MemEntries\Items.h" />
+    <ClInclude Include="MemManager\MemEntries\Shines.h" />
+    <ClInclude Include="MemManager\MemEntries\ShopPoints.h" />
+    <ClInclude Include="MemManager\MemEntries\StarPieces.h" />
+    <ClInclude Include="MemManager\MemEntries\StarPoints.h" />
+    <ClInclude Include="MemManager\MemEntries\StoredItems.h" />
+    <ClInclude Include="MemManager\MemEntries\StrangeSack.h" />
+    <ClInclude Include="MemManager\MemManager.h" />
+    <ClInclude Include="Netcode\Client.h" />
     <ClInclude Include="Common\CommonTypes.h" />
     <ClInclude Include="Common\CommonUtils.h" />
     <ClInclude Include="Common\MemoryCommon.h" />
@@ -154,16 +169,7 @@
     <ClInclude Include="DolphinProcess\IDolphinProcess.h" />
     <ClInclude Include="DolphinProcess\Linux\LinuxDolphinProcess.h" />
     <ClInclude Include="DolphinProcess\Windows\WindowsDolphinProcess.h" />
-    <ClInclude Include="MemManager\IMemEntry.h" />
-    <ClInclude Include="MemManager\MemEntries\Badges.h" />
-    <ClInclude Include="MemManager\MemEntries\Coins.h" />
-    <ClInclude Include="MemManager\MemEntries\Items.h" />
-    <ClInclude Include="MemManager\MemEntries\Shines.h" />
-    <ClInclude Include="MemManager\MemEntries\StarPieces.h" />
-    <ClInclude Include="MemManager\MemEntries\StarPoints.h" />
-    <ClInclude Include="MemManager\MemEntries\StoredItems.h" />
-    <ClInclude Include="MemManager\MemEntries\StrangeSack.h" />
-    <ClInclude Include="MemManager\MemManager.h" />
+    <ClInclude Include="Netcode\Server.h" />
     <ClInclude Include="MemoryScanner\MemoryScanner.h" />
     <ClInclude Include="MemoryWatch\MemWatchEntry.h" />
     <ClInclude Include="MemoryWatch\MemWatchTreeNode.h" />

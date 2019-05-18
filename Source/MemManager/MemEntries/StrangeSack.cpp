@@ -7,20 +7,27 @@
 #define STRANGE_SACK	"1"
 #define PEEKABOO		"309"
 
-StrangeSack::StrangeSack()
+StrangeSack::StrangeSack(bool serverMode)
 { 
-  for (int i = 0; i < MAX_KEYITEMS; i++)
-  {
-    MemWatchEntry* watch = new MemWatchEntry(Name().c_str(), POUCH_PTR, Common::MemType::type_halfword);
-    watch->setBoundToPointer(true);
-    watch->addOffset(FIRST_KEYITEM_OFFSET + (i * KEYITEM_SIZE_BYTES));
+	if (serverMode)
+	{
+      m_hostValue = "N";
+	}
+	else
+	{
+	  for (int i = 0; i < MAX_KEYITEMS; i++)
+	  {
+		MemWatchEntry* watch = new MemWatchEntry(Name().c_str(), POUCH_PTR, Common::MemType::type_halfword);
+		watch->setBoundToPointer(true);
+		watch->addOffset(FIRST_KEYITEM_OFFSET + (i * KEYITEM_SIZE_BYTES));
 
-	m_watches.push_back(watch);
-  }
-  m_tattlesWatch = new MemWatchEntry("Tattles", 0x803DAFBC, Common::MemType::type_byteArray,
-                                     Common::MemBase::base_hexadecimal, true, 28);
+		m_watches.push_back(watch);
+	  }
+	  m_tattlesWatch = new MemWatchEntry("Tattles", 0x803DAFBC, Common::MemType::type_byteArray,
+										 Common::MemBase::base_hexadecimal, true, 28);
 
-  m_pausedWatch = new MemWatchEntry("Paused", 0x8041E67b, Common::MemType::type_byte);
+	  m_pausedWatch = new MemWatchEntry("Paused", 0x8041E67b, Common::MemType::type_byte);
+	}
 }
 
 std::string StrangeSack::Name()
@@ -28,28 +35,26 @@ std::string StrangeSack::Name()
   return "StrangeSack";
 }
 
-bool StrangeSack::setValue(std::string value)
+std::string StrangeSack::setValue(std::string value)
 {
-  if (value == "P")
-    m_givePeekaboo = true;
+  if (IsPaused())
+    return COULD_NOT_SET;
 
-  UpdateKeyItems();
-  return true;
+  UpdateKeyItems(false);
+  return value;
 }
 
-std::string StrangeSack::getValue()
+std::string StrangeSack::hostGetValue()
 {
-  bool havePeekaboo = UpdateKeyItems();
-
-  if (havePeekaboo)
-    return "P";
-  else
-    return "?";
+  return m_hostValue;
 }
 
 std::string StrangeSack::getUpdate(std::string hostVal)
 {
-  bool havePeekaboo = UpdateKeyItems();
+  if (IsPaused())
+    return NO_UPDATE;
+
+  bool havePeekaboo = UpdateKeyItems(false);
 
   if (hostVal != "P" && havePeekaboo)
     return "P";
@@ -57,19 +62,14 @@ std::string StrangeSack::getUpdate(std::string hostVal)
     return NO_UPDATE;
 }
 
-void StrangeSack::handleUpdate(std::string updateString)
+void StrangeSack::hostHandleUpdate(std::string updateString)
 {
   if (updateString == "P")
-    m_givePeekaboo = true;
-
-  UpdateKeyItems();
+    m_hostValue = "P";
 }
 
-bool StrangeSack::UpdateKeyItems() // Returns true if definitely have Peekaboo, false means "not sure"
-{  
-  if (m_pausedWatch->getStringFromMemory() == "1") // Game's paused, player could be Sort-Spamming
-    return false;
-
+bool StrangeSack::UpdateKeyItems(bool givePeekaboo)
+{
   bool seenStrangeSack = false;
   bool seenPeekaboo = false;
   std::vector<std::string> keyItems;
@@ -84,7 +84,6 @@ bool StrangeSack::UpdateKeyItems() // Returns true if definitely have Peekaboo, 
 		if (seenStrangeSack && !seenPeekaboo) // Replace the first duplicate Strange Sack with Peekaboo
 		{
 		  keyItems.push_back(PEEKABOO);
-          m_givePeekaboo = true;
 		  seenPeekaboo = true;
 		}
 		if (!seenStrangeSack) // Ignore (and thus delete) further multiples of Strange Sack
@@ -96,7 +95,6 @@ bool StrangeSack::UpdateKeyItems() // Returns true if definitely have Peekaboo, 
 	else if (item == PEEKABOO && !seenPeekaboo) // Ignore (and thus delete) any multiples of peekaboo
 	{
       keyItems.push_back(PEEKABOO);
-      m_givePeekaboo = true;
 	  seenPeekaboo = true;
 	}
 	else if (item == "0")
@@ -109,7 +107,7 @@ bool StrangeSack::UpdateKeyItems() // Returns true if definitely have Peekaboo, 
 
   if (!seenStrangeSack)
     keyItems.push_back(STRANGE_SACK); // Give Strange Sack if we don't have it
-  if (!seenPeekaboo && m_givePeekaboo)
+  if (!seenPeekaboo && givePeekaboo)
   {
     keyItems.push_back(PEEKABOO);
     seenPeekaboo = true;
@@ -130,4 +128,9 @@ bool StrangeSack::UpdateKeyItems() // Returns true if definitely have Peekaboo, 
 	m_tattlesWatch->writeMemoryFromString("FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF"); // Enough F's to fill the 28 bytes
 
   return seenPeekaboo;
+}
+
+bool StrangeSack::IsPaused()
+{
+  return m_pausedWatch->getStringFromMemory() == "1";
 }

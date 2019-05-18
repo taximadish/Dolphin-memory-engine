@@ -4,15 +4,22 @@
 #define FIRST_ITEM_OFFSET	(0x1BA)
 #define ITEM_SIZE_BYTES		(2)
 
-StoredItems::StoredItems()
-{ 
-  for (int i = 0; i < MAX_ITEMS; i++)
+StoredItems::StoredItems(bool serverMode)
+{
+  if (serverMode)
   {
-    MemWatchEntry* watch = new MemWatchEntry(Name().c_str(), POUCH_PTR, Common::MemType::type_halfword);
-    watch->setBoundToPointer(true);
-    watch->addOffset(FIRST_ITEM_OFFSET + (i * ITEM_SIZE_BYTES));
+    m_hostValue = "0";
+  }
+  else
+  {
+	  for (int i = 0; i < MAX_ITEMS; i++)
+	  {
+		MemWatchEntry* watch = new MemWatchEntry(Name().c_str(), POUCH_PTR, Common::MemType::type_halfword);
+		watch->setBoundToPointer(true);
+		watch->addOffset(FIRST_ITEM_OFFSET + (i * ITEM_SIZE_BYTES));
 
-	m_watches.push_back(watch);
+		m_watches.push_back(watch);
+	  }
   }
 }
 
@@ -21,7 +28,7 @@ std::string StoredItems::Name()
   return "StoredItems";
 }
 
-bool StoredItems::setValue(std::string value)
+std::string StoredItems::setValue(std::string value)
 {
   std::vector<std::string> parts = customSplit(value, ",");
   for (int i = 0; i < MAX_ITEMS; i++)
@@ -35,29 +42,18 @@ bool StoredItems::setValue(std::string value)
       m_watches[i]->writeMemoryFromString("0");
 	}
   }
-  return true;
+  return value;
 }
 
-std::string StoredItems::getValue()
+std::string StoredItems::hostGetValue()
 {
-  std::string value = "";
-  for (int i = 0; i < MAX_ITEMS; i++)
-  {
-    std::string item = m_watches[i]->getStringFromMemory();
-    if (item == "0")
-      break;
-    value.append(item+",");
-  }
-
-  value.append("0");
-
-  return value;
+  return m_hostValue;
 }
 
 std::string StoredItems::getUpdate(std::string hostVal)
 {
   std::map<std::string, int8_t> hostCounts = itemCounts(hostVal);
-  std::map<std::string, int8_t> myCounts = itemCounts(getValue());
+  std::map<std::string, int8_t> myCounts = itemCounts(hostGetValue());
 
   std::string diffs = "";
   // Host Items
@@ -87,7 +83,7 @@ std::string StoredItems::getUpdate(std::string hostVal)
   return diffs;
 }
 
-void StoredItems::handleUpdate(std::string updateString)
+void StoredItems::hostHandleUpdate(std::string updateString)
 {
   std::map<std::string, int8_t> diffs;
   std::vector<std::string> updates = customSplit(updateString, ",");
@@ -97,7 +93,7 @@ void StoredItems::handleUpdate(std::string updateString)
     diffs[parts[0]] = atoi(parts[1].c_str());
   }
 
-  std::vector<std::string> currentItems = customSplit(getValue(), ",");
+  std::vector<std::string> currentItems = customSplit(hostGetValue(), ",");
 
   std::string newItems = "";
   for (int i = 0; i < currentItems.size(); i++) // Keep or discard current items appropriately
@@ -126,7 +122,7 @@ void StoredItems::handleUpdate(std::string updateString)
   }
 
  newItems.append("0");
- setValue(newItems);
+ m_hostValue = newItems;
 }
 
 

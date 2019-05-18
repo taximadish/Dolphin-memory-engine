@@ -1,6 +1,6 @@
-#include "Shines.h"
+#include "ShopPoints.h"
 
-Shines::Shines(bool serverMode)
+ShopPoints::ShopPoints(bool serverMode)
 {
   if (serverMode)
   {
@@ -8,35 +8,30 @@ Shines::Shines(bool serverMode)
   }
   else
   {
-	  m_watch = new MemWatchEntry(Name().c_str(), POUCH_PTR, Common::MemType::type_halfword);
-
-	  m_watch->setBoundToPointer(true);
-	  m_watch->addOffset(0x9C);
+    m_watch = new MemWatchEntry(Name().c_str(), 0x80B08110, Common::MemType::type_halfword);
   }
 }
 
-std::string Shines::Name()
+std::string ShopPoints::Name()
 {
-  return "Shines";
+  return "ShopPoints";
 }
 
-std::string Shines::setValue(std::string value)
+std::string ShopPoints::setValue(std::string value)
 {
   int32_t intVal = atoi(value.c_str());
-  if (intVal > 999)
-    value = "999";
   if (intVal < 0)
     value = "0";
   m_watch->writeMemoryFromString(value);
   return value;
 }
 
-std::string Shines::hostGetValue()
+std::string ShopPoints::hostGetValue()
 {
   return m_hostValue;
 }
 
-std::string Shines::getUpdate(std::string hostVal)
+std::string ShopPoints::getUpdate(std::string hostVal)
 {
   int32_t currentVal = atoi(m_watch->getStringFromMemory().c_str());
   int32_t newVal = atoi(hostVal.c_str());
@@ -49,7 +44,7 @@ std::string Shines::getUpdate(std::string hostVal)
   return std::to_string(currentVal - newVal);
 }
 
-void Shines::hostHandleUpdate(std::string updateString)
+void ShopPoints::hostHandleUpdate(std::string updateString)
 {
   int32_t currentVal = atoi(m_hostValue.c_str());
   int32_t valToAdd = atoi(updateString.c_str());

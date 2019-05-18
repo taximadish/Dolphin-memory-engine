@@ -4,18 +4,25 @@
 #define FIRST_ITEM_OFFSET	(0x192)
 #define ITEM_SIZE_BYTES		(2)
 
-Items::Items()
-{ 
-  for (int i = 0; i < MAX_ITEMS; i++)
+Items::Items(bool serverMode)
+{
+  if (serverMode)
   {
-    MemWatchEntry* watch = new MemWatchEntry(Name().c_str(), POUCH_PTR, Common::MemType::type_halfword);
-    watch->setBoundToPointer(true);
-    watch->addOffset(FIRST_ITEM_OFFSET + (i * ITEM_SIZE_BYTES));
-
-	m_watches.push_back(watch);
+    m_hostValue = "0";
   }
+  else
+  {
+	  for (int i = 0; i < MAX_ITEMS; i++)
+	  {
+		MemWatchEntry* watch = new MemWatchEntry(Name().c_str(), POUCH_PTR, Common::MemType::type_halfword);
+		watch->setBoundToPointer(true);
+		watch->addOffset(FIRST_ITEM_OFFSET + (i * ITEM_SIZE_BYTES));
+
+		m_watches.push_back(watch);
+	  }
   
-  m_pausedWatch = new MemWatchEntry("Paused", 0x8041E67b, Common::MemType::type_byte);
+	  m_pausedWatch = new MemWatchEntry("Paused", 0x8041E67b, Common::MemType::type_byte);
+  }
 }
 
 std::string Items::Name()
@@ -23,10 +30,11 @@ std::string Items::Name()
   return "Items";
 }
 
-bool Items::setValue(std::string value)
+std::string Items::setValue(std::string value)
 {
-  if (false)//IsPaused())
-    return false;
+  if (IsPaused())
+    return COULD_NOT_SET;
+
   std::vector<std::string> parts = customSplit(value, ",");
   for (int i = 0; i < MAX_ITEMS; i++)
   {
@@ -39,29 +47,30 @@ bool Items::setValue(std::string value)
       m_watches[i]->writeMemoryFromString("0");
 	}
   }
-  return true;
+  return value;
 }
 
-std::string Items::getValue()
+std::string Items::hostGetValue()
 {
-  std::string value = "";
-  for (int i = 0; i < MAX_ITEMS; i++)
-  {
-    std::string item = m_watches[i]->getStringFromMemory();
-    if (item == "0")
-      break;
-    value.append(item+",");
-  }
-
-  value.append("0");
-
-  return value;
+  return m_hostValue;
 }
 
 std::string Items::getUpdate(std::string hostVal)
 {
   std::map<std::string, int8_t> hostCounts = itemCounts(hostVal);
-  std::map<std::string, int8_t> myCounts = itemCounts(getValue());
+
+  std::string myItems = "";
+  for (int i = 0; i < MAX_ITEMS; i++)
+  {
+    std::string item = m_watches[i]->getStringFromMemory();
+    if (item == "0")
+      break;
+    myItems.append(item + ",");
+  }
+
+  myItems.append("0");
+
+  std::map<std::string, int8_t> myCounts = itemCounts(myItems);
 
   std::string diffs = "";
   // Host Items
@@ -91,7 +100,7 @@ std::string Items::getUpdate(std::string hostVal)
   return diffs;
 }
 
-void Items::handleUpdate(std::string updateString)
+void Items::hostHandleUpdate(std::string updateString)
 {
   std::map<std::string, int8_t> diffs;
   std::vector<std::string> updates = customSplit(updateString, ",");
@@ -101,7 +110,7 @@ void Items::handleUpdate(std::string updateString)
     diffs[parts[0]] = atoi(parts[1].c_str());
   }
 
-  std::vector<std::string> currentItems = customSplit(getValue(), ",");
+  std::vector<std::string> currentItems = customSplit(hostGetValue(), ",");
 
   std::string newItems = "";
   for (int i = 0; i < currentItems.size(); i++) // Keep or discard current items appropriately
@@ -130,7 +139,7 @@ void Items::handleUpdate(std::string updateString)
   }
 
  newItems.append("0");
- setValue(newItems);
+ m_hostValue = newItems;
 }
 
 

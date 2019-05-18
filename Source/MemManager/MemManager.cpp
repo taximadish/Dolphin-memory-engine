@@ -8,22 +8,24 @@
 #include "MemEntries/Badges.h"
 #include "MemEntries/StrangeSack.h"
 #include "MemEntries/StarPoints.h"
+#include "MemEntries/ShopPoints.h"
 
 #define POUCH_PTR 0x8041EB00
 
-MemManager::MemManager()
+MemManager::MemManager(bool serverMode)
 {
   m_entries = {};
 
   // Shared things
-  addEntry(new Coins());
-  addEntry(new Shines());
-  addEntry(new StarPieces());
-  addEntry(new Items());
-  addEntry(new StoredItems());
-  addEntry(new Badges());
-  addEntry(new StrangeSack());
-  addEntry(new StarPoints());
+  addEntry(new Coins(serverMode));
+  addEntry(new Shines(serverMode));
+  addEntry(new StarPieces(serverMode));
+  addEntry(new Items(serverMode));
+  addEntry(new StoredItems(serverMode));
+  addEntry(new Badges(serverMode));
+  addEntry(new StrangeSack(serverMode));
+  addEntry(new StarPoints(serverMode));
+  addEntry(new ShopPoints(serverMode));
 }
 
 void MemManager::addEntry(IMemEntry* entry)
@@ -31,14 +33,14 @@ void MemManager::addEntry(IMemEntry* entry)
   m_entries[entry->Name()] = entry;
 }
 
-bool MemManager::setEntryValue(std::string name, std::string value)
+std::string MemManager::setEntryValue(std::string name, std::string value)
 {
   return m_entries[name]->setValue(value);
 }
 
-std::string MemManager::readEntryValue(std::string name)
+std::string MemManager::hostGetEntryValue(std::string name)
 {
-  return m_entries[name]->getValue();
+  return m_entries[name]->hostGetValue();
 }
 
 std::string MemManager::getUpdate(std::string name, std::string hostVal)
@@ -46,9 +48,9 @@ std::string MemManager::getUpdate(std::string name, std::string hostVal)
   return m_entries[name]->getUpdate(hostVal);
 }
 
-void MemManager::handleUpdate(std::string name, std::string updateString)
+void MemManager::hostHandleUpdate(std::string name, std::string updateString)
 {
-  m_entries[name]->handleUpdate(updateString);
+  m_entries[name]->hostHandleUpdate(updateString);
 }
 
 std::vector<std::string> MemManager::Keys()
