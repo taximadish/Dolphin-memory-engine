@@ -13,7 +13,7 @@ public:
   std::string hostGetValue() override;
 
   std::string getUpdate(std::string hostVal) override;
-  void hostHandleUpdate(std::string updateString) override;
+  void hostHandleUpdate(int id, std::string updateString) override;
 
 private:
   MemWatchEntry* m_watch;

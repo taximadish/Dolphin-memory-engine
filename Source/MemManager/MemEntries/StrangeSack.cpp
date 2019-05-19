@@ -62,7 +62,7 @@ std::string StrangeSack::getUpdate(std::string hostVal)
     return NO_UPDATE;
 }
 
-void StrangeSack::hostHandleUpdate(std::string updateString)
+void StrangeSack::hostHandleUpdate(int id, std::string updateString)
 {
   if (updateString == "P")
     m_hostValue = "P";

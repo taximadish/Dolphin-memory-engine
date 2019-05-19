@@ -17,7 +17,7 @@ public:
   std::string hostGetEntryValue(std::string name);
 
   std::string getUpdate(std::string name, std::string hostValue);
-  void hostHandleUpdate(std::string name, std::string updateString);
+  void hostHandleUpdate(std::string name, int id, std::string updateString);
 
   std::vector<std::string> Keys();
 

@@ -100,7 +100,7 @@ std::string Items::getUpdate(std::string hostVal)
   return diffs;
 }
 
-void Items::hostHandleUpdate(std::string updateString)
+void Items::hostHandleUpdate(int id, std::string updateString)
 {
   std::map<std::string, int8_t> diffs;
   std::vector<std::string> updates = customSplit(updateString, ",");

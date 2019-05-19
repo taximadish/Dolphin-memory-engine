@@ -9,6 +9,7 @@
 #include "MemEntries/StrangeSack.h"
 #include "MemEntries/StarPoints.h"
 #include "MemEntries/ShopPoints.h"
+#include "MemEntries/Position.h"
 
 #define POUCH_PTR 0x8041EB00
 
@@ -26,6 +27,7 @@ MemManager::MemManager(bool serverMode)
   addEntry(new StrangeSack(serverMode));
   addEntry(new StarPoints(serverMode));
   addEntry(new ShopPoints(serverMode));
+  addEntry(new Position(serverMode));
 }
 
 void MemManager::addEntry(IMemEntry* entry)
@@ -48,9 +50,9 @@ std::string MemManager::getUpdate(std::string name, std::string hostVal)
   return m_entries[name]->getUpdate(hostVal);
 }
 
-void MemManager::hostHandleUpdate(std::string name, std::string updateString)
+void MemManager::hostHandleUpdate(std::string name, int id, std::string updateString)
 {
-  m_entries[name]->hostHandleUpdate(updateString);
+  m_entries[name]->hostHandleUpdate(id, updateString);
 }
 
 std::vector<std::string> MemManager::Keys()

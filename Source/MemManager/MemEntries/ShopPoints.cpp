@@ -44,7 +44,7 @@ std::string ShopPoints::getUpdate(std::string hostVal)
   return std::to_string(currentVal - newVal);
 }
 
-void ShopPoints::hostHandleUpdate(std::string updateString)
+void ShopPoints::hostHandleUpdate(int id, std::string updateString)
 {
   int32_t currentVal = atoi(m_hostValue.c_str());
   int32_t valToAdd = atoi(updateString.c_str());

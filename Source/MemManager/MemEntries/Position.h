@@ -3,10 +3,10 @@
 #include "../IMemEntry.h"
 #include "../../MemoryWatch/MemWatchEntry.h"
 
-class Badges : public IMemEntry
+class Position : public IMemEntry
 {
 public:
-  Badges(bool serverMode);
+  Position(bool serverMode);
 
   std::string Name() override;
   std::string setValue(std::string value) override;
@@ -16,10 +16,14 @@ public:
   void hostHandleUpdate(int id, std::string updateString) override;
 
 private:
-  bool IsPaused();
+  void addMarioPosWatch();
+  void addNPCPosWatches();
+
   std::vector<std::string> customSplit(std::string s, std::string delim);
-  std::map<std::string, int8_t> badgeCounts(std::string itemsString);
-  std::vector<MemWatchEntry*> m_watches;
-  MemWatchEntry* m_pausedWatch;
-  std::string m_hostValue;
+
+  std::vector<MemWatchEntry*> m_watchesX;
+  std::vector<MemWatchEntry*> m_watchesY;
+  std::vector<MemWatchEntry*> m_watchesZ;
+  std::map<int32_t, std::string> m_hostValues;
+  MemWatchEntry* m_mapWatch;
 };

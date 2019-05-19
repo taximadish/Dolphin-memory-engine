@@ -57,7 +57,19 @@ std::string Badges::hostGetValue()
 std::string Badges::getUpdate(std::string hostVal)
 {
   std::map<std::string, int8_t> hostCounts = badgeCounts(hostVal);
-  std::map<std::string, int8_t> myCounts = badgeCounts(hostGetValue());
+  
+  std::string myBadges = "";
+  for (int i = 0; i < MAX_BADGES; i++)
+  {
+    std::string badge = m_watches[i]->getStringFromMemory();
+    if (badge == "0")
+      break;
+    myBadges.append(badge + ",");
+  }
+
+  myBadges.append("0");
+
+  std::map<std::string, int8_t> myCounts = badgeCounts(myBadges);
 
   std::string diffs = "";
   // Host Badges
@@ -87,7 +99,7 @@ std::string Badges::getUpdate(std::string hostVal)
   return diffs;
 }
 
-void Badges::hostHandleUpdate(std::string updateString)
+void Badges::hostHandleUpdate(int id, std::string updateString)
 {
   std::map<std::string, int8_t> diffs;
   std::vector<std::string> updates = customSplit(updateString, ",");

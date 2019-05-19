@@ -45,7 +45,7 @@ std::string Coins::getUpdate(std::string hostVal)
   return std::to_string(currentVal - newVal);
 }
 
-void Coins::hostHandleUpdate(std::string updateString)
+void Coins::hostHandleUpdate(int id, std::string updateString)
 {
   int32_t valToAdd = atoi(updateString.c_str());
 

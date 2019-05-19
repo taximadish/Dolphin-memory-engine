@@ -127,6 +127,7 @@
     <ClCompile Include="MemManager\MemEntries\Badges.cpp" />
     <ClCompile Include="MemManager\MemEntries\Coins.cpp" />
     <ClCompile Include="MemManager\MemEntries\Items.cpp" />
+    <ClCompile Include="MemManager\MemEntries\Position.cpp" />
     <ClCompile Include="MemManager\MemEntries\Shines.cpp" />
     <ClCompile Include="MemManager\MemEntries\ShopPoints.cpp" />
     <ClCompile Include="MemManager\MemEntries\StarPieces.cpp" />
@@ -154,6 +155,7 @@
     <ClInclude Include="MemManager\MemEntries\Badges.h" />
     <ClInclude Include="MemManager\MemEntries\Coins.h" />
     <ClInclude Include="MemManager\MemEntries\Items.h" />
+    <ClInclude Include="MemManager\MemEntries\Position.h" />
     <ClInclude Include="MemManager\MemEntries\Shines.h" />
     <ClInclude Include="MemManager\MemEntries\ShopPoints.h" />
     <ClInclude Include="MemManager\MemEntries\StarPieces.h" />

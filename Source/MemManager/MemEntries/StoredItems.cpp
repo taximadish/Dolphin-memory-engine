@@ -53,7 +53,19 @@ std::string StoredItems::hostGetValue()
 std::string StoredItems::getUpdate(std::string hostVal)
 {
   std::map<std::string, int8_t> hostCounts = itemCounts(hostVal);
-  std::map<std::string, int8_t> myCounts = itemCounts(hostGetValue());
+
+  std::string myItems = "";
+  for (int i = 0; i < MAX_ITEMS; i++)
+  {
+    std::string item = m_watches[i]->getStringFromMemory();
+    if (item == "0")
+      break;
+    myItems.append(item + ",");
+  }
+
+  myItems.append("0");
+
+  std::map<std::string, int8_t> myCounts = itemCounts(myItems);
 
   std::string diffs = "";
   // Host Items
@@ -83,7 +95,7 @@ std::string StoredItems::getUpdate(std::string hostVal)
   return diffs;
 }
 
-void StoredItems::hostHandleUpdate(std::string updateString)
+void StoredItems::hostHandleUpdate(int id, std::string updateString)
 {
   std::map<std::string, int8_t> diffs;
   std::vector<std::string> updates = customSplit(updateString, ",");

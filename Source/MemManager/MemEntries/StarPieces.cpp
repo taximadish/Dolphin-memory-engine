@@ -49,7 +49,7 @@ std::string StarPieces::getUpdate(std::string hostVal)
   return std::to_string(currentVal - newVal);
 }
 
-void StarPieces::hostHandleUpdate(std::string updateString)
+void StarPieces::hostHandleUpdate(int id, std::string updateString)
 {
   int32_t currentVal = atoi(m_hostValue.c_str());
   int32_t valToAdd = atoi(updateString.c_str());

@@ -144,7 +144,11 @@ bool Server::hostHandleUpdate(int m_remoteSocket, std::string* storedData,
     std::string value = parts[2];
 
     (*updateAcks)[name] = ack;
-    m_memManager->hostHandleUpdate(name, value);
+
+	std::vector<int>::iterator it = std::find(m_remoteSockets.begin(), m_remoteSockets.end(), 22);
+    int32_t id = std::distance(m_remoteSockets.begin(), it);
+
+    m_memManager->hostHandleUpdate(name, id, value);
   }
 
   return true;

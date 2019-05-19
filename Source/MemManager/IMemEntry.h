@@ -19,5 +19,5 @@ public:
   virtual std::string hostGetValue() = 0;
 
   virtual std::string getUpdate(std::string hostVal) = 0;
-  virtual void hostHandleUpdate(std::string updateString) = 0;
+  virtual void hostHandleUpdate(int id, std::string updateString) = 0;
 };

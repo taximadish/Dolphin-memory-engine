@@ -13,7 +13,7 @@ public:
   std::string hostGetValue() override;
 
   std::string getUpdate(std::string hostVal) override;
-  void hostHandleUpdate(std::string updateString) override;
+  void hostHandleUpdate(int id, std::string updateString) override;
 
 private:
   std::vector<std::string> customSplit(std::string s, std::string delim);

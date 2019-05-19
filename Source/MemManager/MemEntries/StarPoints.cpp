@@ -24,7 +24,6 @@ StarPoints::StarPoints(bool serverMode)
 	  int32_t currentPoints = atoi(m_pointsWatch->getStringFromMemory().c_str());
 
 	  int32_t currentVal = (currentLevel * 100) + currentPoints;
-	  m_storedClientVal = std::to_string(currentVal);
   }
 }
 
@@ -47,6 +46,11 @@ std::string StarPoints::setValue(std::string value)
   {
     m_pointsWatch->writeMemoryFromString("99");
     return std::to_string((currentLevel*100)+99);
+  }
+
+  if (newValue < currentLevel * 100) // Lower level
+  {
+    return std::to_string((currentLevel*100) + currentPoints); // Don't reduce level
   }
 
   m_pointsWatch->writeMemoryFromString(std::to_string(newValue % 100));
@@ -77,7 +81,7 @@ std::string StarPoints::getUpdate(std::string hostVal)
   return std::to_string(currentVal - newVal);
 }
 
-void StarPoints::hostHandleUpdate(std::string updateString)
+void StarPoints::hostHandleUpdate(int id, std::string updateString)
 {
   int32_t currentVal = atoi(m_hostValue.c_str());
   int32_t valToAdd = atoi(updateString.c_str());

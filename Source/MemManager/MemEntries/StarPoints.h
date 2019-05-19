@@ -13,7 +13,7 @@ public:
   std::string hostGetValue() override;
 
   std::string getUpdate(std::string hostVal) override;
-  void hostHandleUpdate(std::string updateString) override;
+  void hostHandleUpdate(int id, std::string updateString) override;
 
 private:
   bool InBattle();
@@ -21,6 +21,5 @@ private:
   MemWatchEntry* m_levelWatch;
   MemWatchEntry* m_battleWatch;
 
-  std::string m_storedClientVal;
   std::string m_hostValue;
 };
