@@ -62,6 +62,22 @@ void Server::update()
 		{
 		  std::string name = sharedThings[i];
 		  std::string newValue = m_memManager->hostGetEntryValue(name);
+
+		  size_t index = 0;
+        while (true)
+        {
+        /* Locate the substring to replace. */
+        index = newValue.find("$USER"+std::to_string(clientNum), index);
+        if (index == std::string::npos)
+            break;
+
+        /* Make the replacement. */
+        newValue.replace(index, 6, "-1, 000");
+
+        /* Advance index forward so the next iteration doesn't pick it up as well. */
+        index += 3;
+		}
+
 		  if (newValue == "")
 			continue;
 
@@ -145,7 +161,7 @@ bool Server::hostHandleUpdate(int m_remoteSocket, std::string* storedData,
 
     (*updateAcks)[name] = ack;
 
-	std::vector<int>::iterator it = std::find(m_remoteSockets.begin(), m_remoteSockets.end(), 22);
+	std::vector<int>::iterator it = std::find(m_remoteSockets.begin(), m_remoteSockets.end(), m_remoteSocket);
     int32_t id = std::distance(m_remoteSockets.begin(), it);
 
     m_memManager->hostHandleUpdate(name, id, value);

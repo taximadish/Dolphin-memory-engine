@@ -4,6 +4,7 @@
 #include <QCloseEvent>
 #include <QMainWindow>
 #include <QMenu>
+#include <qspinbox.h>
 
 #include "../Common/CommonTypes.h"
 #include "../Common/MemoryCommon.h"
@@ -29,14 +30,9 @@ public:
 	  CLOSED,
 	  FAILED
   };
-
-  void closeEvent(QCloseEvent* event) override;
-  void addWatchRequested(u32 address, Common::MemType type, size_t length, bool isUnsigned,
-                         Common::MemBase base);
   void updateDolphinHookingStatus();
   void onHookAttempt();
   void onUnhook();
-  void updateMem2Status();
 
   void updateServerStatus();
   void onStartServerAttempt();
@@ -44,28 +40,14 @@ public:
   void onConnectAttempt();
   void onUpdateTimer();
 
-  void onOpenWatchFile();
-  void onSaveWatchFile();
-  void onSaveAsWatchFile();
-  void onClearWatchList();
-  void onOpenSettings();
-  void onImportFromCT();
-  void onExportAsCSV();
-  void onAbout();
-  void onQuit();
-
 private:
-  void makeMenus();
   void initialiseWidgets();
   void makeLayouts();
 
-  MemWatchWidget* m_watcher;
-
   QLabel* m_lblDolphinStatus;
   QPushButton* m_btnAttempHook;
-  QLineEdit* m_txtProcessNum;
+  QSpinBox* m_txtProcessNum;
   QPushButton* m_btnUnhook;
-  QLabel* m_lblMem2Status;
   QPushButton* m_btnStartServer;
   Server* m_server;
   Client* m_client;
@@ -76,21 +58,4 @@ private:
   QLineEdit* m_txtAddress;
   QLineEdit* m_txtPort;
   QPushButton* m_btnConnect;
-
-  
-  
-  QMenu* m_menuFile;
-  QMenu* m_menuEdit;
-  QMenu* m_menuView;
-  QMenu* m_menuHelp;
-  QAction* m_actOpenWatchList;
-  QAction* m_actSaveWatchList;
-  QAction* m_actSaveAsWatchList;
-  QAction* m_actClearWatchList;
-  QAction* m_actImportFromCT;
-  QAction* m_actExportAsCSV;
-  QAction* m_actViewScanner;
-  QAction* m_actSettings;
-  QAction* m_actQuit;
-  QAction* m_actAbout;
 };

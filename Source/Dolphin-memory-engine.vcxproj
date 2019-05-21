@@ -15,6 +15,7 @@
     <ProjectGuid>{FB0FF455-327C-4FCF-B234-A60D8AA9FDDD}</ProjectGuid>
     <RootNamespace>Dolphinmemoryengine</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <ProjectName>MemSync</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="Dolphin-memory-engine.default.props" />

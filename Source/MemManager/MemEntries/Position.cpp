@@ -12,7 +12,7 @@ Position::Position(bool serverMode)
 { 
   if (serverMode)
   {
-    m_hostValues[0] = "hei_01,0,-1000,0"; // get the ball rolling
+    return;
   }
   else
   {
@@ -43,7 +43,7 @@ std::string Position::setValue(std::string value)
 	  if (parts[0] == "-1") // skip placeholder
             continue;
 
-	  int32_t num = atoi(parts[0].c_str());
+	  int32_t num = atoi(parts[0].substr(parts[0].length() - 1).c_str());
 	  std::string map = parts[1];
 	  std::string x = parts[2];
 	  std::string y = parts[3];
@@ -74,7 +74,7 @@ std::string Position::hostGetValue()
     std::string value = it->second;
 
 	if (value != "")
-      myPosValue.append(std::to_string(key) + "," + value + "#");
+      myPosValue.append("$USER" + std::to_string(key) + "," + value + "#");
   }
 
   if (myPosValue.length() > 0)
@@ -122,7 +122,7 @@ void Position::addNPCPosWatches()
 {
   for (int i = 0; i < 10; i++)
   {
-	  int64_t xAddr = NPC1_XVAL_OFFSET + (NPC_SIZE * i);
+    int64_t xAddr = NPC1_XVAL_OFFSET + (NPC_SIZE * i);
 	  MemWatchEntry* xWatch = new MemWatchEntry("NPC X", xAddr, Common::MemType::type_float);
 
 	  MemWatchEntry* yWatch = new MemWatchEntry("NPC Y", xAddr + POS_VAL_DIST, Common::MemType::type_float);
