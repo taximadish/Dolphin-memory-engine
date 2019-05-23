@@ -148,6 +148,7 @@
     <ClCompile Include="GeneratedFiles\$(Configuration)\moc_MemWatchWidget.cpp" />
     <ClCompile Include="GeneratedFiles\$(Configuration)\moc_ResultsListModel.cpp" />
     <ClCompile Include="Netcode\Client.cpp" />
+    <ClCompile Include="MemManager\NPC.cpp" />
     <ClCompile Include="Netcode\Server.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -172,6 +173,7 @@
     <ClInclude Include="DolphinProcess\IDolphinProcess.h" />
     <ClInclude Include="DolphinProcess\Linux\LinuxDolphinProcess.h" />
     <ClInclude Include="DolphinProcess\Windows\WindowsDolphinProcess.h" />
+    <ClInclude Include="MemManager\NPC.h" />
     <ClInclude Include="Netcode\Server.h" />
     <ClInclude Include="MemoryScanner\MemoryScanner.h" />
     <ClInclude Include="MemoryWatch\MemWatchEntry.h" />

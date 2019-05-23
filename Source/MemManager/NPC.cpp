@@ -1,0 +1,35 @@
+#include "NPC.h"
+
+
+#define NPC_SIZE		0x340
+
+// Apparently:
+#define MAX_NPC_NUM		25
+
+#define BASE_ADDRESS	0x80AF2E60
+
+#define FLAGS_1_OFFSET	0x03
+
+#define X_POS_OFFSET	0x8C
+#define Y_POS_OFFSET	0x90
+#define Z_POS_OFFSET	0x94
+
+#define WIDTH_OFFSET	0xE0
+#define HEIGHT_OFFSET	0xE4
+#define DEPTH_OFFSET	0xE8
+
+#define RED_OFFSET		0x114
+#define GREEN_OFFSET	0x115
+#define BLUE_OFFSET		0x116
+#define ALPHA_OFFSET	0x117
+
+#define HITBOX_RADIUS_OFFSET	0x14C
+#define HITBOX_HEIGHT_OFFSET	0x150
+#define SHADOW_RADIUS_OFFSET	0x154
+
+#define STAND_STILL_OFFSET		0x1D5
+
+NPC::NPC()
+{
+
+}
