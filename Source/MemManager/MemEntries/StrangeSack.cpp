@@ -40,7 +40,10 @@ std::string StrangeSack::setValue(std::string value)
   if (IsPaused())
     return COULD_NOT_SET;
 
-  UpdateKeyItems(false);
+  if (value == "P")
+    UpdateKeyItems(true);
+  else
+	UpdateKeyItems(false);
   return value;
 }
 
