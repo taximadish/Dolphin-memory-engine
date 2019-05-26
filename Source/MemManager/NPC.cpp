@@ -107,7 +107,7 @@ void NPC::setAngle(std::string angle, std::string camAngle)
   float fAngle = atof(angle.c_str());
   float fCamAngle = atof(camAngle.c_str());
 
-  float relAngle = fAngle - fCamAngle;
+  float relAngle = fAngle + fCamAngle;
   relAngle = fmod(relAngle, 360.0);
 
   if (relAngle < 0)
