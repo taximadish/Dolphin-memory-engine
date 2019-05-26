@@ -83,6 +83,7 @@ void NPC::update() // Maintenance function, to be called every cycle
   m_flags2Watch->writeMemoryFromString("4"); // 2^2 (unknown, doesn't work without)
   m_modelNumWatch->writeMemoryFromString("1"); // Mario facing forward+left
 
+  m_depthWatch->writeMemoryFromString("1");
   m_heightWatch->writeMemoryFromString("1");
 
   m_talkTextPtrWatch->writeMemoryFromString("0"); // No talk text
@@ -107,7 +108,7 @@ void NPC::setAngle(std::string angle, std::string camAngle)
   float fAngle = atof(angle.c_str());
   float fCamAngle = atof(camAngle.c_str());
 
-  float relAngle = fAngle + fCamAngle;
+  float relAngle = fAngle - fCamAngle;
   relAngle = fmod(relAngle, 360.0);
 
   if (relAngle < 0)
@@ -125,36 +126,15 @@ void NPC::setAngle(std::string angle, std::string camAngle)
     relAngle += MIN_ANGLE;
   }
 
-  m_angle->writeMemoryFromString(std::to_string(fAngle));
-
   if (relAngle > 90 && relAngle < 270) // facing away from camera
   {
-    if (isSideOn(fCamAngle))
-    {
-      m_depthWatch->writeMemoryFromString("1");
-	  m_widthWatch->writeMemoryFromString("-1");
-	}
-	else
-	{
-      m_depthWatch->writeMemoryFromString("-1");
-      m_widthWatch->writeMemoryFromString("1");
-	}
-    // adjust mario to always face camera
+    fAngle = fmod((360 - (fAngle + 90)) - 90, 360); // Do some maths to make mario face camera
+    m_widthWatch->writeMemoryFromString("-1");
   }
   else
   {
-	m_depthWatch->writeMemoryFromString("1");
     m_widthWatch->writeMemoryFromString("1");
   }
-}
 
-bool NPC::isSideOn(float angle)
-{
-  if (angle > 45 && angle < 135)
-	  return true;
-
-  if (angle > 225 && angle < 315)
-    return true;
-
-  return false;
+  m_angle->writeMemoryFromString(std::to_string(fAngle));
 }

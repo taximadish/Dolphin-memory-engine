@@ -11,7 +11,8 @@ public:
   void setAngle(std::string angle, std::string camAngle);
 
 private:
-  bool isSideOn(float angle);
+  std::string getWidth(float camAngle);
+  std::string getDepth(float camAngle);
 
   MemWatchEntry* m_entireNpcWatch;
 
