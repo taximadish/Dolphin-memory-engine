@@ -11,9 +11,7 @@ public:
   void setAngle(std::string angle, std::string camAngle);
 
 private:
-  std::string getWidth(float camAngle);
-  std::string getDepth(float camAngle);
-
+  float positiveFMod(float num, float modulo);
   MemWatchEntry* m_entireNpcWatch;
 
   MemWatchEntry* m_flags1Watch;

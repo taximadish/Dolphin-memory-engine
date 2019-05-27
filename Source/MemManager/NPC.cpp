@@ -109,10 +109,7 @@ void NPC::setAngle(std::string angle, std::string camAngle)
   float fCamAngle = atof(camAngle.c_str());
 
   float relAngle = fAngle - fCamAngle;
-  relAngle = fmod(relAngle, 360.0);
-
-  if (relAngle < 0)
-    relAngle += 360.0; // always want positive value
+  relAngle = positiveFMod(relAngle, 360.0);
 
   // Adjust so never completely perpendicular to camera
   if (relAngle < 90 + MIN_ANGLE && relAngle > 90 - MIN_ANGLE)
@@ -128,7 +125,7 @@ void NPC::setAngle(std::string angle, std::string camAngle)
 
   if (relAngle > 90 && relAngle < 270) // facing away from camera
   {
-    fAngle = fmod((360 - (fAngle + 90)) - 90, 360); // Do some maths to make mario face camera
+    fAngle = positiveFMod(180 - fAngle, 360); // Do some maths to make mario face camera
     m_widthWatch->writeMemoryFromString("-1");
   }
   else
@@ -137,4 +134,14 @@ void NPC::setAngle(std::string angle, std::string camAngle)
   }
 
   m_angle->writeMemoryFromString(std::to_string(fAngle));
+}
+
+float NPC::positiveFMod(float num, float modulo)
+{
+  float result = fmod(num, modulo);
+
+  if (result < 0)
+    result += modulo;
+
+  return result;
 }
