@@ -78,7 +78,6 @@ bool StrangeSack::UpdateKeyItems(bool givePeekaboo)
   std::vector<std::string> keyItems;
 
   int numItems = 0;
-  bool dirty = false;
 
   for (int i = 0; i < MAX_KEYITEMS; i++)
   {
@@ -89,29 +88,17 @@ bool StrangeSack::UpdateKeyItems(bool givePeekaboo)
 		{
 		  keyItems.push_back(PEEKABOO);
 		  seenPeekaboo = true;
-          dirty = true;
 		}
 		if (!seenStrangeSack) // Ignore (and thus delete) further multiples of Strange Sack
 		{
 		  keyItems.push_back(STRANGE_SACK);
 		}
-		else
-		{
-          dirty = true;
-		}
 		seenStrangeSack = true;
 	}
-	else if (item == PEEKABOO)
+	else if (item == PEEKABOO && !seenPeekaboo) // Ignore (and thus delete) any multiples of peekaboo
 	{
-		if (!seenPeekaboo)
-		{
-		  keyItems.push_back(PEEKABOO);
-		  seenPeekaboo = true;
-		}
-		else
-		{
-          dirty = true;
-		}
+      keyItems.push_back(PEEKABOO);
+	  seenPeekaboo = true;
 	}
 	else if (item == "0")
       break;
@@ -122,20 +109,11 @@ bool StrangeSack::UpdateKeyItems(bool givePeekaboo)
   }
 
   if (!seenStrangeSack)
-  {
     keyItems.push_back(STRANGE_SACK); // Give Strange Sack if we don't have it
-    dirty = true;
-  }
   if (!seenPeekaboo && givePeekaboo)
   {
     keyItems.push_back(PEEKABOO);
     seenPeekaboo = true;
-    dirty = true;
-  }
-
-  if (!dirty)
-  {
-    return seenPeekaboo;
   }
 
   size_t max = (numItems > keyItems.size()) ? numItems : keyItems.size();
