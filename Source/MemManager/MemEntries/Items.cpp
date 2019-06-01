@@ -35,7 +35,40 @@ std::string Items::setValue(std::string value)
   if (IsPaused())
     return COULD_NOT_SET;
 
-  std::vector<std::string> parts = customSplit(value, ",");
+  std::map<std::string, int8_t> hostCounts = itemCounts(value);
+
+  std::string myNewItems = "";
+  for (int i = 0; i < MAX_ITEMS; i++)
+  {
+    std::string item = m_watches[i]->getStringFromMemory();
+
+	if (item == "0")
+    {
+      for (std::map<std::string, int8_t>::iterator it = hostCounts.begin(); it != hostCounts.end(); ++it)
+      {
+		if (it->second > 0)
+		{
+          myNewItems.append(it->first + ",");
+          hostCounts[it->first]--;
+          break;
+		}
+
+      }
+	}
+    else
+	{
+		if (hostCounts[item] > 0)
+		{
+		  myNewItems.append(item + ",");
+		  hostCounts[item]--;
+		}
+	}
+  }
+
+  myNewItems.append("0");
+
+  // Set new items
+  std::vector<std::string> parts = customSplit(myNewItems, ",");
   for (int i = 0; i < MAX_ITEMS; i++)
   {
     if (i < parts.size())
