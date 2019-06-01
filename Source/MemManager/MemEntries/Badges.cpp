@@ -34,50 +34,17 @@ std::string Badges::setValue(std::string value)
 {
   if (IsPaused())
     return COULD_NOT_SET;
-
-  std::map<std::string, int8_t> hostCounts = badgeCounts(value);
-
-  std::string myNewBadges = "";
-  for (int i = 0; i < MAX_BADGES; i++)
-  {
-    std::string badge = m_watches[i]->getStringFromMemory();
-
-    if (badge == "0")
-    {
-      for (std::map<std::string, int8_t>::iterator it = hostCounts.begin(); it != hostCounts.end(); ++it)
-      {
-        if (it->second > 0)
-        {
-          myNewBadges.append(it->first + ",");
-          hostCounts[it->first]--;
-          break;
-        }
-      }
-    }
-    else
-    {
-      if (hostCounts[badge] > 0)
-      {
-        myNewBadges.append(badge + ",");
-        hostCounts[badge]--;
-      }
-    }
-  }
-
-  myNewBadges.append("0");
-
-  // Set new badges
-  std::vector<std::string> parts = customSplit(myNewBadges, ",");
+  std::vector<std::string> parts = customSplit(value, ",");
   for (int i = 0; i < MAX_BADGES; i++)
   {
     if (i < parts.size())
     {
       m_watches[i]->writeMemoryFromString(parts[i]);
     }
-    else
-    {
+	else
+	{
       m_watches[i]->writeMemoryFromString("0");
-    }
+	}
   }
   return value;
 }
