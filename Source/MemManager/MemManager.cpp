@@ -1,14 +1,5 @@
 #include "MemManager.h"
 
-#include "MemEntries/Coins.h"
-#include "MemEntries/Shines.h"
-#include "MemEntries/StarPieces.h"
-#include "MemEntries/Items.h"
-#include "MemEntries/StoredItems.h"
-#include "MemEntries/Badges.h"
-#include "MemEntries/StrangeSack.h"
-#include "MemEntries/StarPoints.h"
-#include "MemEntries/ShopPoints.h"
 #include "MemEntries/Position.h"
 
 #define POUCH_PTR 0x8041EB00
@@ -18,15 +9,6 @@ MemManager::MemManager(bool serverMode)
   m_entries = {};
 
   // Shared things
-  addEntry(new Coins(serverMode));
-  addEntry(new Shines(serverMode));
-  addEntry(new StarPieces(serverMode));
-  addEntry(new Items(serverMode));
-  addEntry(new StoredItems(serverMode));
-  addEntry(new Badges(serverMode));
-  addEntry(new StrangeSack(serverMode));
-  addEntry(new StarPoints(serverMode));
-  addEntry(new ShopPoints(serverMode));
   addEntry(new Position(serverMode));
 }
 

@@ -1,16 +1,13 @@
 #include "Position.h"
 
-#define MARIO_PTR			(0x8041E900)
+#define POS_BASE	(0x805717EC)
 
-#define MARIO_XVAL_OFFSET	(0x8C)
+#define OFFSET_1	(0x38)
+#define OFFSET_2	(0x18)
+#define OFFSET_3	(0x3F60)
+#define OFFSET_4	(0x3A8)
 
-#define NPC1_XVAL_OFFSET	(0x80AF2EEC)
-#define NPC_SIZE			(0x340)
-#define POS_VAL_DIST		(0x04)
 
-#define MARIO_FACING_OFFSET (0x1B0)
-
-#define CAMERA_ANGLE_OFFSET (0x19C)
 
 Position::Position(bool serverMode)
 { 
@@ -20,12 +17,12 @@ Position::Position(bool serverMode)
   }
   else
   {
-    initMarioWatches();
+    initMainPosWatches();
 
-	m_mapWatch = new MemWatchEntry("Map", 0x80415FD0, Common::MemType::type_string,
-		Common::MemBase::base_decimal, false, 16);
-    m_mapWatch->setBoundToPointer(true);
-    m_mapWatch->addOffset(0x12C);
+	//m_mapWatch = new MemWatchEntry("Map", 0x80415FD0, Common::MemType::type_string,
+		//Common::MemBase::base_decimal, false, 16);
+   // m_mapWatch->setBoundToPointer(true);
+    //m_mapWatch->addOffset(0x12C);
   }
 }
 
@@ -51,20 +48,21 @@ std::string Position::setValue(std::string value)
 	  std::string x = parts[2];
 	  std::string y = parts[3];
 	  std::string z = parts[4];
-      std::string angle = parts[5];
 
-	  std::string myMap = m_mapWatch->getStringFromMemory();
-
-	  prepareNPC(num); // Must be done before modifying NPC in any way
+	  std::string myMap = "_NOT_IMPL_";//m_mapWatch->getStringFromMemory();
 
 	  if (strcmp(myMap.c_str(), map.c_str()) != 0) // Not on same map
 	  {
-            m_npcMap[num]->setPos("0", "-1000", "0"); // hide character below map
+            //m_npcMap[num]->setPos("0", "-1000", "0"); // hide character below map
             continue;
 	  }
 
-	  m_npcMap[num]->setPos(x, y, z);
-      m_npcMap[num]->setAngle(angle, m_cameraAngle->getStringFromMemory());
+	  m_secondX->writeMemoryFromString(x);
+      m_secondY->writeMemoryFromString(y);
+      m_secondZ->writeMemoryFromString(z);
+
+	  //m_npcMap[num]->setPos(x, y, z);
+      //m_npcMap[num]->setAngle(angle, m_cameraAngle->getStringFromMemory());
   }
   return value;
 }
@@ -91,15 +89,13 @@ std::string Position::hostGetValue()
 
 std::string Position::getUpdate(std::string hostVal)
 {
-  std::string map = m_mapWatch->getStringFromMemory();
+  std::string map = "_NOT_IMPL_"; // m_mapWatch->getStringFromMemory();
 
-  std::string x = m_marioX->getStringFromMemory();
-  std::string y = m_marioY->getStringFromMemory();
-  std::string z = m_marioZ->getStringFromMemory();
+  std::string x = m_mainX->getStringFromMemory();
+  std::string y = m_mainY->getStringFromMemory();
+  std::string z = m_mainZ->getStringFromMemory();
 
-  std::string angle = getAngle();
-
-  std::string value = map + "," + x + "," + y + "," + z + "," + angle;
+  std::string value = map + "," + x + "," + y + "," + z ;
   return value;
 }
 
@@ -108,39 +104,49 @@ void Position::hostHandleUpdate(int id, std::string updateString)
   m_hostValues[id] = updateString;
 }
 
-void Position::initMarioWatches()
+void Position::initMainPosWatches()
 {
-  m_marioX = new MemWatchEntry("Mario X", MARIO_PTR, Common::MemType::type_float);
-  m_marioX->setBoundToPointer(true);
-  m_marioX->addOffset(MARIO_XVAL_OFFSET);
+  m_mainX = new MemWatchEntry("Main X", POS_BASE, Common::MemType::type_float);
+  m_mainX->setBoundToPointer(true);
+  m_mainX->addOffset(OFFSET_1);
+  m_mainX->addOffset(OFFSET_2);
+  m_mainX->addOffset(OFFSET_3);
+  m_mainX->addOffset(OFFSET_4);
 
-  m_marioY = new MemWatchEntry("Mario Y", MARIO_PTR, Common::MemType::type_float);
-  m_marioY->setBoundToPointer(true);
-  m_marioY->addOffset(MARIO_XVAL_OFFSET + POS_VAL_DIST);
+  m_mainY = new MemWatchEntry("Main Y", POS_BASE, Common::MemType::type_float);
+  m_mainY->setBoundToPointer(true);
+  m_mainY->addOffset(OFFSET_1);
+  m_mainY->addOffset(OFFSET_2);
+  m_mainY->addOffset(OFFSET_3);
+  m_mainY->addOffset(OFFSET_4 + 0x04);
 
-  m_marioZ = new MemWatchEntry("Mario Z", MARIO_PTR, Common::MemType::type_float);
-  m_marioZ->setBoundToPointer(true);
-  m_marioZ->addOffset(MARIO_XVAL_OFFSET + (2 * POS_VAL_DIST));
+  m_mainZ = new MemWatchEntry("Main Z", POS_BASE, Common::MemType::type_float);
+  m_mainZ->setBoundToPointer(true);
+  m_mainZ->addOffset(OFFSET_1);
+  m_mainZ->addOffset(OFFSET_2);
+  m_mainZ->addOffset(OFFSET_3);
+  m_mainZ->addOffset(OFFSET_4 + 0x08);
 
-  m_marioAngle = new MemWatchEntry("Mario Angle", MARIO_PTR, Common::MemType::type_float);
-  m_marioAngle->setBoundToPointer(true);
-  m_marioAngle->addOffset(MARIO_FACING_OFFSET);
+  m_secondX = new MemWatchEntry("2 X", POS_BASE + 0x4, Common::MemType::type_float);
+  m_secondX->setBoundToPointer(true);
+  m_secondX->addOffset(OFFSET_1);
+  m_secondX->addOffset(OFFSET_2);
+  m_secondX->addOffset(OFFSET_3);
+  m_secondX->addOffset(OFFSET_4);
 
-  m_cameraAngle = new MemWatchEntry("Camera Angle", MARIO_PTR, Common::MemType::type_float);
-  m_cameraAngle->setBoundToPointer(true);
-  m_cameraAngle->addOffset(CAMERA_ANGLE_OFFSET);
-}
+  m_secondY = new MemWatchEntry("2 Y", POS_BASE + 0x04, Common::MemType::type_float);
+  m_secondY->setBoundToPointer(true);
+  m_secondY->addOffset(OFFSET_1);
+  m_secondY->addOffset(OFFSET_2);
+  m_secondY->addOffset(OFFSET_3);
+  m_secondY->addOffset(OFFSET_4 + 0x04);
 
-std::string Position::getAngle()
-{
-  std::string facing = m_marioAngle->getStringFromMemory();
-  std::string camera = m_cameraAngle->getStringFromMemory();
-
-  float angle = atof(facing.c_str()) + atof(camera.c_str());
-
-  angle = fmod(angle, 360.0);
-
-  return std::to_string(angle);
+  m_secondZ = new MemWatchEntry("2 Z", POS_BASE + 0x04, Common::MemType::type_float);
+  m_secondZ->setBoundToPointer(true);
+  m_secondZ->addOffset(OFFSET_1);
+  m_secondZ->addOffset(OFFSET_2);
+  m_secondZ->addOffset(OFFSET_3);
+  m_secondZ->addOffset(OFFSET_4 + 0x08);
 }
 
 std::vector<std::string> Position::customSplit(std::string s, std::string delim)
@@ -161,14 +167,4 @@ std::vector<std::string> Position::customSplit(std::string s, std::string delim)
     parts.push_back(s);
   }
   return parts;
-}
-
-void Position::prepareNPC(uint8_t num)
-{
-  if (m_npcMap.count(num) == 0)
-  {
-    m_npcMap[num] = new NPC(num + 23);
-  }
-
-  m_npcMap[num]->update();
 }

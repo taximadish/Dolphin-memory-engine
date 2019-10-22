@@ -17,21 +17,22 @@ public:
   void hostHandleUpdate(int id, std::string updateString) override;
 
 private:
-  void initMarioWatches();
-  std::string getAngle();
+  void initMainPosWatches();
 
   std::vector<std::string> customSplit(std::string s, std::string delim);
 
-  MemWatchEntry* m_marioX;
-  MemWatchEntry* m_marioY;
-  MemWatchEntry* m_marioZ;
-  MemWatchEntry* m_marioAngle;
-  MemWatchEntry* m_cameraAngle;
+  MemWatchEntry* m_mainX;
+  MemWatchEntry* m_mainY;
+  MemWatchEntry* m_mainZ;
+
+  MemWatchEntry* m_secondX;
+  MemWatchEntry* m_secondY;
+  MemWatchEntry* m_secondZ;
+
+  MemWatchEntry* m_thirdX;
+  MemWatchEntry* m_thirdY;
+  MemWatchEntry* m_thirdZ;
 
   std::map<int32_t, std::string> m_hostValues;
   MemWatchEntry* m_mapWatch;
-
-  std::map<uint8_t, NPC*> m_npcMap;
-
-  void prepareNPC(uint8_t num);
 };
