@@ -7,7 +7,6 @@
 
 #include "../MemoryWatch/MemWatchEntry.h"
 
-#define POUCH_PTR		0x8041EB00
 #define NO_UPDATE		""
 #define COULD_NOT_SET	"__NOT_SET__"
 

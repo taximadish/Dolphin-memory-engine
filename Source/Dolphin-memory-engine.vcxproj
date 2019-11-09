@@ -125,6 +125,7 @@
     <ClCompile Include="GUI\Settings\DlgSettings.cpp" />
     <ClCompile Include="GUI\Settings\SConfig.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MemManager\MemEntries\Money.cpp" />
     <ClCompile Include="MemManager\MemEntries\Position.cpp" />
     <ClCompile Include="MemManager\MemManager.cpp" />
     <ClCompile Include="MemoryScanner\MemoryScanner.cpp" />
@@ -145,6 +146,7 @@
   <ItemGroup>
     <ClInclude Include="CheatEngineParser\CheatEngineParser.h" />
     <ClInclude Include="MemManager\IMemEntry.h" />
+    <ClInclude Include="MemManager\MemEntries\Money.h" />
     <ClInclude Include="MemManager\MemEntries\Position.h" />
     <ClInclude Include="MemManager\MemManager.h" />
     <ClInclude Include="Netcode\Client.h" />

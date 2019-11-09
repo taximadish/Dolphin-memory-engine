@@ -60,30 +60,31 @@ void Server::update()
 		std::vector<std::string> sharedThings = m_memManager->Keys();
 		for (int i = 0; i < sharedThings.size(); i++)
 		{
-		  std::string name = sharedThings[i];
-		  std::string newValue = m_memManager->hostGetEntryValue(name);
+			std::string name = sharedThings[i];
+			std::string newValue = m_memManager->hostGetEntryValue(name);
 
-		  size_t index = 0;
-        while (true)
-        {
-        /* Locate the substring to replace. */
-        index = newValue.find("$USER"+std::to_string(clientNum), index);
-        if (index == std::string::npos)
-            break;
+			size_t index = 0;
+			while (true)
+			{
+				/* Locate the substring to replace. */
+				std::string playerString = "$USER" + std::to_string(clientNum);
+				index = newValue.find(playerString, index);
+				if (index == std::string::npos)
+					break;
 
-        /* Make the replacement. */
-        newValue.replace(index, 6, "-1, 000");
+				/* Make the replacement. */
+				newValue.replace(index, playerString.length(), "$YOU_ARE" + std::to_string(clientNum));
 
-        /* Advance index forward so the next iteration doesn't pick it up as well. */
-        index += 3;
-		}
+				/* Advance index forward so the next iteration doesn't pick it up as well. */
+				index += 3;
+			}
 
-		  if (newValue == "")
-			continue;
+			if (newValue == "")
+				continue;
 
-		  data.append(name + ";");
-		  data.append(std::to_string(m_updateAcks[m_remoteSockets[clientNum]][name]) + ";");
-		  data.append(newValue + "/");
+			data.append(name + ";");
+			data.append(std::to_string(m_updateAcks[m_remoteSockets[clientNum]][name]) + ";");
+			data.append(newValue + "/");
 		}
 
 		send(m_remoteSockets[clientNum], data.c_str(), data.length(), 0);

@@ -18,8 +18,13 @@ public:
 
 private:
   void initMainPosWatches();
+  bool inBattle();
+
+  bool m_wasPreviouslyInBattle;
 
   std::vector<std::string> customSplit(std::string s, std::string delim);
+
+  MemWatchEntry* m_battle;
 
   MemWatchEntry* m_mainX;
   MemWatchEntry* m_mainY;
