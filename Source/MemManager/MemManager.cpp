@@ -2,6 +2,8 @@
 
 #include "MemEntries/Position.h"
 #include "MemEntries/Money.h"
+#include "MemEntries/SkillUnlocks.h"
+#include "MemEntries/XP.h";
 
 #define POUCH_PTR 0x8041EB00
 
@@ -12,6 +14,8 @@ MemManager::MemManager(bool serverMode)
   // Shared things
   addEntry(new Position(serverMode));
   addEntry(new Money(serverMode));
+  addEntry(new SkillUnlocks(serverMode));
+  addEntry(new XP(serverMode));
 }
 
 void MemManager::addEntry(IMemEntry* entry)

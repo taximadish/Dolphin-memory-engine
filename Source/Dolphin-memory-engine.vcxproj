@@ -127,6 +127,8 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MemManager\MemEntries\Money.cpp" />
     <ClCompile Include="MemManager\MemEntries\Position.cpp" />
+    <ClCompile Include="MemManager\MemEntries\SkillUnlocks.cpp" />
+    <ClCompile Include="MemManager\MemEntries\XP.cpp" />
     <ClCompile Include="MemManager\MemManager.cpp" />
     <ClCompile Include="MemoryScanner\MemoryScanner.cpp" />
     <ClCompile Include="MemoryWatch\MemWatchEntry.cpp" />
@@ -148,6 +150,8 @@
     <ClInclude Include="MemManager\IMemEntry.h" />
     <ClInclude Include="MemManager\MemEntries\Money.h" />
     <ClInclude Include="MemManager\MemEntries\Position.h" />
+    <ClInclude Include="MemManager\MemEntries\SkillUnlocks.h" />
+    <ClInclude Include="MemManager\MemEntries\XP.h" />
     <ClInclude Include="MemManager\MemManager.h" />
     <ClInclude Include="Netcode\Client.h" />
     <ClInclude Include="Common\CommonTypes.h" />

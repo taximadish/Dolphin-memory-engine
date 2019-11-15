@@ -33,10 +33,12 @@ private:
   MemWatchEntry* m_secondX;
   MemWatchEntry* m_secondY;
   MemWatchEntry* m_secondZ;
+  MemWatchEntry* m_secondFallPeak;
 
   MemWatchEntry* m_thirdX;
   MemWatchEntry* m_thirdY;
   MemWatchEntry* m_thirdZ;
+  MemWatchEntry* m_thirdFallPeak;
 
   std::map<int32_t, std::string> m_hostValues;
   MemWatchEntry* m_mapWatch;

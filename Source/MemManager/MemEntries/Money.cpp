@@ -1,5 +1,7 @@
 #include "Money.h"
 
+#define MAX_MONEY (999999999)
+
 Money::Money(bool serverMode)
 { 
   if (serverMode)
@@ -45,7 +47,7 @@ std::string Money::getUpdate(std::string hostVal)
     return NO_UPDATE;
   }
 
-  if (currentVal == 999999999 && newVal < 899999999)
+  if (currentVal == MAX_MONEY && newVal < 899999999)
   {
     currentVal = 0; // We underflowed
   }
@@ -58,8 +60,8 @@ void Money::hostHandleUpdate(int id, std::string updateString)
   int32_t valToAdd = atoi(updateString.c_str());
 
   m_hostValue = m_hostValue + valToAdd;
-  if (m_hostValue > 999)
-    m_hostValue = 999;
+  if (m_hostValue > MAX_MONEY)
+    m_hostValue = MAX_MONEY;
   
   if (m_hostValue < 0)
     m_hostValue = 0;

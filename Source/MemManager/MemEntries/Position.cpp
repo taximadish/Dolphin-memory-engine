@@ -7,6 +7,8 @@
 #define OFFSET_3 (0x3F60)
 #define OFFSET_4 (0x3A8)
 
+#define FALL_PEAK_OFFSET	(0x488)
+
 Position::Position(bool serverMode)
 {
   if (serverMode)
@@ -97,12 +99,14 @@ std::string Position::setValue(std::string value)
       m_secondX->writeMemoryFromString(x);
       m_secondY->writeMemoryFromString(y);
       m_secondZ->writeMemoryFromString(z);
+      m_secondFallPeak->writeMemoryFromString("-9000");
     }
     else if (num == 1)
     {
       m_thirdX->writeMemoryFromString(x);
       m_thirdY->writeMemoryFromString(y);
       m_thirdZ->writeMemoryFromString(z);
+      m_thirdFallPeak->writeMemoryFromString("-9000");
     }
 
     // m_npcMap[num]->setPos(x, y, z);
@@ -142,6 +146,13 @@ std::string Position::getUpdate(std::string hostVal)
   std::string x = m_mainX->getStringFromMemory();
   std::string y = m_mainY->getStringFromMemory();
   std::string z = m_mainZ->getStringFromMemory();
+
+  if (z == "???") // We don't exist (eg. load transition)
+  {
+    x = "10000"; // Hide char
+    y = "-10000";
+    z = "10000";
+  }
 
   std::string value = map + "," + x + "," + y + "," + z;
   return value;
@@ -207,6 +218,13 @@ void Position::initMainPosWatches()
   m_secondZ->addOffset(OFFSET_3);
   m_secondZ->addOffset(OFFSET_4 + 0x08);
 
+  m_secondFallPeak = new MemWatchEntry("2 Fall Peak", POS_BASE + 0x04, Common::MemType::type_float);
+  m_secondFallPeak->setBoundToPointer(true);
+  m_secondFallPeak->addOffset(OFFSET_1);
+  m_secondFallPeak->addOffset(OFFSET_2);
+  m_secondFallPeak->addOffset(OFFSET_3);
+  m_secondFallPeak->addOffset(FALL_PEAK_OFFSET);
+
   m_thirdX = new MemWatchEntry("3 X", POS_BASE + 0x8, Common::MemType::type_float);
   m_thirdX->setBoundToPointer(true);
   m_thirdX->addOffset(OFFSET_1);
@@ -227,6 +245,13 @@ void Position::initMainPosWatches()
   m_thirdZ->addOffset(OFFSET_2);
   m_thirdZ->addOffset(OFFSET_3);
   m_thirdZ->addOffset(OFFSET_4 + 0x08);
+
+  m_thirdFallPeak = new MemWatchEntry("3 Fall Peak", POS_BASE + 0x08, Common::MemType::type_float);
+  m_thirdFallPeak->setBoundToPointer(true);
+  m_thirdFallPeak->addOffset(OFFSET_1);
+  m_thirdFallPeak->addOffset(OFFSET_2);
+  m_thirdFallPeak->addOffset(OFFSET_3);
+  m_thirdFallPeak->addOffset(FALL_PEAK_OFFSET);
 }
 
 std::vector<std::string> Position::customSplit(std::string s, std::string delim)
