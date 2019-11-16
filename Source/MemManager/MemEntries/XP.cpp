@@ -60,6 +60,7 @@ std::string XP::setValue(std::string value)
   }
 
   std::vector<std::string> xpCounts = customSplit(value, ",");
+  std::string newValues = "";
 
   for (int xpCountNum = 0; xpCountNum < 8; xpCountNum++)
   {
@@ -68,16 +69,20 @@ std::string XP::setValue(std::string value)
     int xpToLevel = atoi(m_ReserveXpUpToLevelWatches[xpCountNum]->getStringFromMemory().c_str());
     if (xpToLevel == 0)
     {
+      newValues.append("0,");
       continue; // We haven't gotten this party member yet, skip since this _WOULD_ triple party member starting level
 	}
 
 	int newXpPastLevel = targetXp - xpToLevel;
     if (newXpPastLevel < 0)
-	{
-	  continue; // This should never happen after initial sync, but just in case
+    {
+      int xpPastLevel = atoi(m_ReserveXpPastLevelWatches[xpCountNum]->getStringFromMemory().c_str());
+      newValues.append(std::to_string(xpPastLevel + xpToLevel) + ",");
+	  continue; // This shouldn't really happen after initial sync, but just in case
 	}
 
 	m_ReserveXpPastLevelWatches[xpCountNum]->writeMemoryFromString(std::to_string(newXpPastLevel));
+	newValues.append(std::to_string(newXpPastLevel + xpToLevel) + ",");
 
     int charNum = xpCountNum + 1;
 	for (int partySlot = 0; partySlot < 3; partySlot++)
@@ -89,7 +94,9 @@ std::string XP::setValue(std::string value)
     }
   }
 
-  return value;
+  newValues = newValues.substr(0, newValues.length() - 1); // remove trailing comma
+
+  return newValues;
 }
 
 std::string XP::hostGetValue()

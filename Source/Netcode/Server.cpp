@@ -45,8 +45,7 @@ void Server::update()
           if (!stillConnected)
           {
             closesocket(m_remoteSockets[i]);
-            m_remoteSockets.erase(m_remoteSockets.begin() +
-                                  i); // remove closed socket at position i
+            m_remoteSockets.erase(m_remoteSockets.begin() + i); // remove closed socket at position i
           }
         }
       }
