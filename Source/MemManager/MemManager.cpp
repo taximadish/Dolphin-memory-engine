@@ -5,6 +5,7 @@
 #include "MemEntries/SkillUnlocks.h"
 #include "MemEntries/XP.h";
 #include "MemEntries/PartyAffinity.h"
+#include "MemEntries/AP.h"
 
 MemManager::MemManager(bool serverMode)
 {
@@ -16,6 +17,7 @@ MemManager::MemManager(bool serverMode)
   addEntry(new SkillUnlocks(serverMode));
   addEntry(new XP(serverMode));
   addEntry(new PartyAffinity(serverMode));
+  addEntry(new AP(serverMode));
 }
 
 void MemManager::addEntry(IMemEntry* entry)

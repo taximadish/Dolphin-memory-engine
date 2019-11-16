@@ -131,6 +131,7 @@
     <ClCompile Include="MemManager\MemEntries\SkillUnlocks.cpp" />
     <ClCompile Include="MemManager\MemEntries\XP.cpp" />
     <ClCompile Include="MemManager\MemManager.cpp" />
+    <ClCompile Include="MemManager\MemEntries\AP.cpp" />
     <ClCompile Include="MemoryScanner\MemoryScanner.cpp" />
     <ClCompile Include="MemoryWatch\MemWatchEntry.cpp" />
     <ClCompile Include="MemoryWatch\MemWatchTreeNode.cpp" />
@@ -155,6 +156,7 @@
     <ClInclude Include="MemManager\MemEntries\XP.h" />
     <ClInclude Include="MemManager\MemManager.h" />
     <ClInclude Include="MemManager\MemEntries\PartyAffinity.h" />
+    <ClInclude Include="MemManager\MemEntries\AP.h" />
     <ClInclude Include="Netcode\Client.h" />
     <ClInclude Include="Common\CommonTypes.h" />
     <ClInclude Include="Common\CommonUtils.h" />
