@@ -6,6 +6,7 @@
 #include "MemEntries/XP.h";
 #include "MemEntries/PartyAffinity.h"
 #include "MemEntries/AP.h"
+#include "MemEntries/AffinityCoins.h"
 
 MemManager::MemManager(bool serverMode)
 {
@@ -18,6 +19,7 @@ MemManager::MemManager(bool serverMode)
   addEntry(new XP(serverMode));
   addEntry(new PartyAffinity(serverMode));
   addEntry(new AP(serverMode));
+  addEntry(new AffinityCoins(serverMode));
 }
 
 void MemManager::addEntry(IMemEntry* entry)
