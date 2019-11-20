@@ -14,10 +14,10 @@ Skills::Skills(bool serverMode)
 	  }
 
       trees = trees.substr(0, trees.length() - 1); // remove trailing comma
-      value.append(trees + ";");
+      value.append(trees + "!");
 	}
 
-    value = value.substr(0, value.length() - 1); // remove trailing semicolon
+    value = value.substr(0, value.length() - 1); // remove trailing '!'
 
 	m_hostValue = value;
   }
@@ -66,7 +66,7 @@ std::string Skills::setValue(std::string value)
 {
   //std::string out = "";
   int skillNo = 0;
-  std::vector<std::string> charas = customSplit(value, ";");
+  std::vector<std::string> charas = customSplit(value, "!");
   for (int chara = 0; chara < NUM_CHARACTERS; chara++)
   {
     //out.append(std::to_string(chara) + " Char: {");
@@ -112,7 +112,7 @@ std::string Skills::hostGetValue()
 std::string Skills::getUpdate(std::string hostVal)
 {
   std::string updates = "";
-  std::vector<std::string> charas = customSplit(hostVal, ";");
+  std::vector<std::string> charas = customSplit(hostVal, "!");
   for (int chara = 0; chara < NUM_CHARACTERS; chara++)
   {
     std::vector<std::string> trees = customSplit(charas[chara], ",");
@@ -133,17 +133,17 @@ std::string Skills::getUpdate(std::string hostVal)
       updates.append(std::to_string(pointsDiff) + ",");
     }
     updates = updates.substr(0, updates.length() - 1); // remove trailing comma
-    updates.append(";");
+    updates.append("!");
   }
-  updates = updates.substr(0, updates.length() - 1); // remove trailing semicolon
+  updates = updates.substr(0, updates.length() - 1); // remove trailing '!'
   return updates;
 }
 
 void Skills::hostHandleUpdate(int id, std::string updateString)
 {
   std::string newValue = "";
-  std::vector<std::string> charas = customSplit(updateString, ";");
-  std::vector<std::string> hostCharas = customSplit(m_hostValue, ";");
+  std::vector<std::string> charas = customSplit(updateString, "!");
+  std::vector<std::string> hostCharas = customSplit(m_hostValue, "!");
   for (int chara = 0; chara < NUM_CHARACTERS; chara++)
   {
     std::vector<std::string> trees = customSplit(charas[chara], ",");
@@ -155,9 +155,9 @@ void Skills::hostHandleUpdate(int id, std::string updateString)
       newValue.append(std::to_string(hostVal + valAdded) + ",");
     }
     newValue = newValue.substr(0, newValue.length() - 1); // remove trailing comma
-    newValue.append(";");
+    newValue.append("!");
   }
-  newValue = newValue.substr(0, newValue.length() - 1); // remove trailing semicolon
+  newValue = newValue.substr(0, newValue.length() - 1); // remove trailing '!'
 
   m_hostValue = newValue;
 }
