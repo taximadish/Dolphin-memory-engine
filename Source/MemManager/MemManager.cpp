@@ -7,6 +7,7 @@
 #include "MemEntries/PartyAffinity.h"
 #include "MemEntries/AP.h"
 #include "MemEntries/AffinityCoins.h"
+#include "MemEntries/Skills.h"
 
 MemManager::MemManager(bool serverMode)
 {
@@ -20,6 +21,7 @@ MemManager::MemManager(bool serverMode)
   addEntry(new PartyAffinity(serverMode));
   addEntry(new AP(serverMode));
   addEntry(new AffinityCoins(serverMode));
+  addEntry(new Skills(serverMode));
 }
 
 void MemManager::addEntry(IMemEntry* entry)
