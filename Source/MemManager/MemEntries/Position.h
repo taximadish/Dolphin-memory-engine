@@ -2,7 +2,6 @@
 
 #include "../IMemEntry.h"
 #include "../../MemoryWatch/MemWatchEntry.h"
-#include "../NPC.h"
 
 class Position : public IMemEntry
 {

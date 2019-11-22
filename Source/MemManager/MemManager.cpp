@@ -8,6 +8,7 @@
 #include "MemEntries/AP.h"
 #include "MemEntries/AffinityCoins.h"
 #include "MemEntries/Skills.h"
+#include "MemEntries/AreaAffinity.h"
 
 MemManager::MemManager(bool serverMode)
 {
@@ -22,6 +23,7 @@ MemManager::MemManager(bool serverMode)
   addEntry(new AP(serverMode));
   addEntry(new AffinityCoins(serverMode));
   addEntry(new Skills(serverMode));
+  addEntry(new AreaAffinity(serverMode));
 }
 
 void MemManager::addEntry(IMemEntry* entry)
