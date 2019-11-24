@@ -1,14 +1,5 @@
 #include "Position.h"
 
-#define POS_BASE (0x805717EC)
-
-#define OFFSET_1 (0x38)
-#define OFFSET_2 (0x18)
-#define OFFSET_3 (0x3F60)
-#define OFFSET_4 (0x3A8)
-
-#define FALL_PEAK_OFFSET	(0x488)
-
 Position::Position(bool serverMode)
 {
   if (serverMode)
@@ -36,14 +27,18 @@ std::string Position::setValue(std::string value)
   bool nowInBattle = inBattle();
   if (nowInBattle && m_wasPreviouslyInBattle)
   {
-    return value; // Let them fight
+    return value; // Don't interfere with anything - let them fight
   }
   else if (nowInBattle && !m_wasPreviouslyInBattle)
   {
     // Battle just started, return control of party members (tp them very far away so they get
     // warped back to player)
-    m_secondY->writeMemoryFromString("-10000");
-    m_thirdY->writeMemoryFromString("-10000");
+    for (int slot = 1; slot < 2; slot++)
+    {
+      m_YWatches[slot]->writeMemoryFromString("-10000");
+      m_FallPeakWatches[slot]->writeMemoryFromString("-10000");
+      m_TeleblockerWatches[slot]->writeMemoryFromString("0");
+    }
 
     m_wasPreviouslyInBattle = true;
     return value;
@@ -54,7 +49,6 @@ std::string Position::setValue(std::string value)
   // Format "NUM,MAP,X,Y,Z#NUM,MAP,X,Y,Z"		Num is 0-indexed, 0 = first NPC
   std::vector<std::string> players = customSplit(value, "#");
 
-  
   int32_t my_num = INT_MAX;
   for (int i = 0; i < players.size(); i++)
   {
@@ -62,7 +56,7 @@ std::string Position::setValue(std::string value)
     if (parts[0].find("$YOU_ARE") != std::string::npos)
     {
       my_num = atoi(parts[0].substr(parts[0].length() - 1).c_str());
-	}
+    }
   }
 
   for (int i = 0; i < players.size(); i++)
@@ -80,37 +74,45 @@ std::string Position::setValue(std::string value)
     else if (num > my_num)
     {
       num--;
-	}
+    }
     std::string map = parts[1];
     std::string x = parts[2];
     std::string y = parts[3];
     std::string z = parts[4];
+    std::string angle = parts[5];
 
     std::string myMap = "_NOT_IMPL_"; // m_mapWatch->getStringFromMemory();
 
     if (strcmp(myMap.c_str(), map.c_str()) != 0) // Not on same map
     {
       // m_npcMap[num]->setPos("0", "-1000", "0"); // hide character below map
-      continue;
+      // continue;
     }
 
-    if (num == 0)
+    if (num <= 1) // Only have enough party members to show nums 0 & 1
     {
-      m_secondX->writeMemoryFromString(x);
-      m_secondY->writeMemoryFromString(y);
-      m_secondZ->writeMemoryFromString(z);
-      m_secondFallPeak->writeMemoryFromString("-9000");
-    }
-    else if (num == 1)
-    {
-      m_thirdX->writeMemoryFromString(x);
-      m_thirdY->writeMemoryFromString(y);
-      m_thirdZ->writeMemoryFromString(z);
-      m_thirdFallPeak->writeMemoryFromString("-9000");
-    }
+      int slot = num + 1;
+      m_XWatches[slot]->writeMemoryFromString(m_prevXValues[slot]);
+      m_TargetXWatches[slot]->writeMemoryFromString(GetTarget(m_prevXValues[slot], x));
 
-    // m_npcMap[num]->setPos(x, y, z);
-    // m_npcMap[num]->setAngle(angle, m_cameraAngle->getStringFromMemory());
+      m_YWatches[slot]->writeMemoryFromString(m_prevYValues[slot]);
+      m_TargetYWatches[slot]->writeMemoryFromString(GetTarget(m_prevYValues[slot], y));
+
+      m_ZWatches[slot]->writeMemoryFromString(m_prevZValues[slot]);
+      m_TargetZWatches[slot]->writeMemoryFromString(GetTarget(m_prevZValues[slot], z));
+
+      m_TargetAngleWatches[slot]->writeMemoryFromString(m_prevAngles[slot]);
+	  m_CurrentAngleWatches[slot]->writeMemoryFromString(m_prevAngles[slot]);
+
+      m_FallPeakWatches[slot]->writeMemoryFromString("-10000");
+      m_YVelWatches[slot]->writeMemoryFromString("0");
+      m_TeleblockerWatches[slot]->writeMemoryFromString("-1"); // signed equivalent of 255
+
+      m_prevXValues[slot] = x;
+      m_prevYValues[slot] = y;
+      m_prevZValues[slot] = z;
+      m_prevAngles[slot] = angle;
+    }
   }
 
   return value;
@@ -143,9 +145,10 @@ std::string Position::getUpdate(std::string hostVal)
 {
   std::string map = "_NOT_IMPL_"; // m_mapWatch->getStringFromMemory();
 
-  std::string x = m_mainX->getStringFromMemory();
-  std::string y = m_mainY->getStringFromMemory();
-  std::string z = m_mainZ->getStringFromMemory();
+  std::string x = m_XWatches[0]->getStringFromMemory();
+  std::string y = m_YWatches[0]->getStringFromMemory();
+  std::string z = m_ZWatches[0]->getStringFromMemory();
+  std::string angle = m_TargetAngleWatches[0]->getStringFromMemory();
 
   if (z == "???") // We don't exist (eg. load transition)
   {
@@ -154,7 +157,7 @@ std::string Position::getUpdate(std::string hostVal)
     z = "10000";
   }
 
-  std::string value = map + "," + x + "," + y + "," + z;
+  std::string value = map + "," + x + "," + y + "," + z + "," + angle;
   return value;
 }
 
@@ -168,6 +171,16 @@ bool Position::inBattle()
   return m_battle->getStringFromMemory() == "1";
 }
 
+std::string Position::GetTarget(std::string prevVal, std::string newVal)
+{
+  float prevF = atof(prevVal.c_str());
+  float newF = atof(newVal.c_str());
+  float diffF = newF - prevF;
+  float targetF = prevF + (diffF * TARGET_MULTI);
+
+  return std::to_string(targetF);
+}
+
 void Position::initMainPosWatches()
 {
   m_battle = new MemWatchEntry("Battle Bool", 0x80C45EF4, Common::MemType::type_byte);
@@ -176,82 +189,138 @@ void Position::initMainPosWatches()
   m_battle->addOffset(0x18);
   m_battle->addOffset(0x0E);
 
-  m_mainX = new MemWatchEntry("Main X", POS_BASE, Common::MemType::type_float);
-  m_mainX->setBoundToPointer(true);
-  m_mainX->addOffset(OFFSET_1);
-  m_mainX->addOffset(OFFSET_2);
-  m_mainX->addOffset(OFFSET_3);
-  m_mainX->addOffset(OFFSET_4);
+  for (int slot = 0; slot < PARTY_SIZE; slot++)
+  {
+    MemWatchEntry* x =
+        new MemWatchEntry("PosX", POS_BASE + (slot * SLOT_SIZE), Common::MemType::type_float);
+    x->setBoundToPointer(true);
+    x->addOffset(OFFSET_1);
+    x->addOffset(OFFSET_2);
+    x->addOffset(OFFSET_3);
+    x->addOffset(OFFSET_4 + X_OFFSET);
 
-  m_mainY = new MemWatchEntry("Main Y", POS_BASE, Common::MemType::type_float);
-  m_mainY->setBoundToPointer(true);
-  m_mainY->addOffset(OFFSET_1);
-  m_mainY->addOffset(OFFSET_2);
-  m_mainY->addOffset(OFFSET_3);
-  m_mainY->addOffset(OFFSET_4 + 0x04);
+    m_XWatches.push_back(x);
 
-  m_mainZ = new MemWatchEntry("Main Z", POS_BASE, Common::MemType::type_float);
-  m_mainZ->setBoundToPointer(true);
-  m_mainZ->addOffset(OFFSET_1);
-  m_mainZ->addOffset(OFFSET_2);
-  m_mainZ->addOffset(OFFSET_3);
-  m_mainZ->addOffset(OFFSET_4 + 0x08);
+    MemWatchEntry* y =
+        new MemWatchEntry("PosY", POS_BASE + (slot * SLOT_SIZE), Common::MemType::type_float);
+    y->setBoundToPointer(true);
+    y->addOffset(OFFSET_1);
+    y->addOffset(OFFSET_2);
+    y->addOffset(OFFSET_3);
+    y->addOffset(OFFSET_4 + Y_OFFSET);
 
-  m_secondX = new MemWatchEntry("2 X", POS_BASE + 0x4, Common::MemType::type_float);
-  m_secondX->setBoundToPointer(true);
-  m_secondX->addOffset(OFFSET_1);
-  m_secondX->addOffset(OFFSET_2);
-  m_secondX->addOffset(OFFSET_3);
-  m_secondX->addOffset(OFFSET_4);
+    m_YWatches.push_back(y);
 
-  m_secondY = new MemWatchEntry("2 Y", POS_BASE + 0x04, Common::MemType::type_float);
-  m_secondY->setBoundToPointer(true);
-  m_secondY->addOffset(OFFSET_1);
-  m_secondY->addOffset(OFFSET_2);
-  m_secondY->addOffset(OFFSET_3);
-  m_secondY->addOffset(OFFSET_4 + 0x04);
+    MemWatchEntry* z =
+        new MemWatchEntry("PosZ", POS_BASE + (slot * SLOT_SIZE), Common::MemType::type_float);
+    z->setBoundToPointer(true);
+    z->addOffset(OFFSET_1);
+    z->addOffset(OFFSET_2);
+    z->addOffset(OFFSET_3);
+    z->addOffset(OFFSET_4 + Z_OFFSET);
 
-  m_secondZ = new MemWatchEntry("2 Z", POS_BASE + 0x04, Common::MemType::type_float);
-  m_secondZ->setBoundToPointer(true);
-  m_secondZ->addOffset(OFFSET_1);
-  m_secondZ->addOffset(OFFSET_2);
-  m_secondZ->addOffset(OFFSET_3);
-  m_secondZ->addOffset(OFFSET_4 + 0x08);
+    m_ZWatches.push_back(z);
 
-  m_secondFallPeak = new MemWatchEntry("2 Fall Peak", POS_BASE + 0x04, Common::MemType::type_float);
-  m_secondFallPeak->setBoundToPointer(true);
-  m_secondFallPeak->addOffset(OFFSET_1);
-  m_secondFallPeak->addOffset(OFFSET_2);
-  m_secondFallPeak->addOffset(OFFSET_3);
-  m_secondFallPeak->addOffset(FALL_PEAK_OFFSET);
+	MemWatchEntry* targetAngle =
+        new MemWatchEntry("Target Angle", POS_BASE + (slot * SLOT_SIZE), Common::MemType::type_float);
+    targetAngle->setBoundToPointer(true);
+    targetAngle->addOffset(OFFSET_1);
+    targetAngle->addOffset(OFFSET_2);
+    targetAngle->addOffset(OFFSET_3);
+    targetAngle->addOffset(TARGET_ANGLE_OFFSET);
 
-  m_thirdX = new MemWatchEntry("3 X", POS_BASE + 0x8, Common::MemType::type_float);
-  m_thirdX->setBoundToPointer(true);
-  m_thirdX->addOffset(OFFSET_1);
-  m_thirdX->addOffset(OFFSET_2);
-  m_thirdX->addOffset(OFFSET_3);
-  m_thirdX->addOffset(OFFSET_4);
+    m_TargetAngleWatches.push_back(targetAngle);
 
-  m_thirdY = new MemWatchEntry("3 Y", POS_BASE + 0x08, Common::MemType::type_float);
-  m_thirdY->setBoundToPointer(true);
-  m_thirdY->addOffset(OFFSET_1);
-  m_thirdY->addOffset(OFFSET_2);
-  m_thirdY->addOffset(OFFSET_3);
-  m_thirdY->addOffset(OFFSET_4 + 0x04);
+	MemWatchEntry* currentAngle =
+        new MemWatchEntry("Current Angle", POS_BASE + (slot * SLOT_SIZE), Common::MemType::type_float);
+    currentAngle->setBoundToPointer(true);
+    currentAngle->addOffset(OFFSET_1);
+    currentAngle->addOffset(OFFSET_2);
+    currentAngle->addOffset(OFFSET_3);
+    currentAngle->addOffset(CURRENT_ANGLE_OFFSET);
 
-  m_thirdZ = new MemWatchEntry("3 Z", POS_BASE + 0x08, Common::MemType::type_float);
-  m_thirdZ->setBoundToPointer(true);
-  m_thirdZ->addOffset(OFFSET_1);
-  m_thirdZ->addOffset(OFFSET_2);
-  m_thirdZ->addOffset(OFFSET_3);
-  m_thirdZ->addOffset(OFFSET_4 + 0x08);
+    m_CurrentAngleWatches.push_back(currentAngle);
 
-  m_thirdFallPeak = new MemWatchEntry("3 Fall Peak", POS_BASE + 0x08, Common::MemType::type_float);
-  m_thirdFallPeak->setBoundToPointer(true);
-  m_thirdFallPeak->addOffset(OFFSET_1);
-  m_thirdFallPeak->addOffset(OFFSET_2);
-  m_thirdFallPeak->addOffset(OFFSET_3);
-  m_thirdFallPeak->addOffset(FALL_PEAK_OFFSET);
+    MemWatchEntry* yVel =
+        new MemWatchEntry("PosYVel", POS_BASE + (slot * SLOT_SIZE), Common::MemType::type_float);
+    yVel->setBoundToPointer(true);
+    yVel->addOffset(OFFSET_1);
+    yVel->addOffset(OFFSET_2);
+    yVel->addOffset(OFFSET_3);
+    yVel->addOffset(Y_VEL_OFFSET);
+
+    m_YVelWatches.push_back(yVel);
+
+    MemWatchEntry* fallPeak =
+		new MemWatchEntry("PosFallPeak", POS_BASE + (slot * SLOT_SIZE), Common::MemType::type_float);
+    fallPeak->setBoundToPointer(true);
+    fallPeak->addOffset(OFFSET_1);
+    fallPeak->addOffset(OFFSET_2);
+    fallPeak->addOffset(OFFSET_3);
+    fallPeak->addOffset(FALL_PEAK_OFFSET);
+
+    m_FallPeakWatches.push_back(fallPeak);
+  }
+
+  m_prevXValues = {"0", "0", "0"};
+  m_prevYValues = {"0", "0", "0"};
+  m_prevZValues = {"0", "0", "0"};
+  m_prevAngles = {"0", "0", "0"};
+
+  // These are invalid/unused for char 0 (Main char)
+  m_TeleblockerWatches.push_back(NULL);
+  m_TargetXWatches.push_back(NULL);
+  m_TargetYWatches.push_back(NULL);
+  m_TargetZWatches.push_back(NULL);
+
+
+  for (int slot = 1; slot < 3; slot++)
+  {
+    int targetBaseOffset = TARGET_2_OFFSET;
+    if (slot == 2)
+    {
+      targetBaseOffset = TARGET_3_OFFSET;
+    }
+    MemWatchEntry* teleBlocker =
+        new MemWatchEntry("Teleblocker", POS_BASE + (slot * SLOT_SIZE), Common::MemType::type_byte);
+    teleBlocker->setBoundToPointer(true);
+    teleBlocker->addOffset(OFFSET_1);
+    teleBlocker->addOffset(OFFSET_2);
+    teleBlocker->addOffset(OFFSET_3);
+    teleBlocker->addOffset(targetBaseOffset + TELEBLOCKER_OFFSET);
+
+    m_TeleblockerWatches.push_back(teleBlocker);
+
+    MemWatchEntry* targetX =
+        new MemWatchEntry("PosX", POS_BASE + (slot * SLOT_SIZE), Common::MemType::type_float);
+    targetX->setBoundToPointer(true);
+    targetX->addOffset(OFFSET_1);
+    targetX->addOffset(OFFSET_2);
+    targetX->addOffset(OFFSET_3);
+    targetX->addOffset(targetBaseOffset + X_OFFSET);
+
+    m_TargetXWatches.push_back(targetX);
+
+    MemWatchEntry* targetY =
+        new MemWatchEntry("PosY", POS_BASE + (slot * SLOT_SIZE), Common::MemType::type_float);
+    targetY->setBoundToPointer(true);
+    targetY->addOffset(OFFSET_1);
+    targetY->addOffset(OFFSET_2);
+    targetY->addOffset(OFFSET_3);
+    targetY->addOffset(targetBaseOffset + Y_OFFSET);
+
+    m_TargetYWatches.push_back(targetY);
+
+    MemWatchEntry* targetZ =
+        new MemWatchEntry("PosZ", POS_BASE + (slot * SLOT_SIZE), Common::MemType::type_float);
+    targetZ->setBoundToPointer(true);
+    targetZ->addOffset(OFFSET_1);
+    targetZ->addOffset(OFFSET_2);
+    targetZ->addOffset(OFFSET_3);
+    targetZ->addOffset(targetBaseOffset + Z_OFFSET);
+
+    m_TargetZWatches.push_back(targetZ);
+  }
 }
 
 std::vector<std::string> Position::customSplit(std::string s, std::string delim)

@@ -30,7 +30,7 @@ MainWindow::MainWindow()
   updateDolphinHookingStatus();
 
   m_updateTimer = new QTimer(this);
-  m_updateTimer->setInterval(16); // 60 per second
+  m_updateTimer->setInterval(33); // 30 per second
   m_updateTimer->start();
   connect(m_updateTimer, &QTimer::timeout, this, &MainWindow::onUpdateTimer);
   m_server = new Server();
