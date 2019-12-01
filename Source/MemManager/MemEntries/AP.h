@@ -3,10 +3,6 @@
 #include "../../MemoryWatch/MemWatchEntry.h"
 #include "../IMemEntry.h"
 
-#define NUM_CHARACTERS (8)
-
-#define BASE_RESERVE_ADDRESS (0x80CE437C)
-#define CHARACTER_SIZE (0x3DD4)
 #define AP_OFFSET (0x08)
 
 class AP : public IMemEntry
@@ -15,6 +11,7 @@ public:
   AP(bool serverMode);
 
   std::string Name() override;
+  int Priority() override;
   std::string setValue(std::string value) override;
   std::string hostGetValue() override;
 

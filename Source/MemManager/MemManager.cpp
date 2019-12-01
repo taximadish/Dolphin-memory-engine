@@ -9,6 +9,7 @@
 #include "MemEntries/AffinityCoins.h"
 #include "MemEntries/Skills.h"
 #include "MemEntries/AreaAffinity.h"
+#include "MemEntries/ArtMaxLevels.h"
 
 MemManager::MemManager(bool serverMode)
 {
@@ -24,11 +25,17 @@ MemManager::MemManager(bool serverMode)
   addEntry(new AffinityCoins(serverMode));
   addEntry(new Skills(serverMode));
   addEntry(new AreaAffinity(serverMode));
+  addEntry(new ArtMaxLevels(serverMode));
 }
 
 void MemManager::addEntry(IMemEntry* entry)
 {
   m_entries[entry->Name()] = entry;
+}
+
+int MemManager::GetPriority(std::string name)
+{
+  return m_entries[name]->Priority();
 }
 
 std::string MemManager::setEntryValue(std::string name, std::string value)

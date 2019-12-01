@@ -8,6 +8,7 @@ Server::Server()
 {
   m_running = false;
   m_storedData = "";
+  m_priorityCounter = 0;
   
   m_memManager = new MemManager(true);
 }
@@ -52,14 +53,25 @@ void Server::update()
     }
 
     // Send current gamestate
-
-    for (int clientNum = 0; clientNum < m_remoteSockets.size(); clientNum++)
+    m_priorityCounter++;
+    if (m_priorityCounter == INT_MAX)
+    {
+      m_priorityCounter = 0;
+	}
+    
+	for (int clientNum = 0; clientNum < m_remoteSockets.size(); clientNum++)
     {
 		std::string data = "";
 		std::vector<std::string> sharedThings = m_memManager->Keys();
 		for (int i = 0; i < sharedThings.size(); i++)
 		{
 			std::string name = sharedThings[i];
+
+            if (m_priorityCounter % m_memManager->GetPriority(name) != 0)
+            {
+              continue;
+			}
+
 			std::string newValue = m_memManager->hostGetEntryValue(name);
 
 			size_t index = 0;

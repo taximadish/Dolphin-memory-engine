@@ -14,6 +14,7 @@ public:
   AreaAffinity(bool serverMode);
 
   std::string Name() override;
+  int Priority() override;
   std::string setValue(std::string value) override;
   std::string hostGetValue() override;
 

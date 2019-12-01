@@ -25,12 +25,12 @@ void Client::update()
 	int recVal = select(m_socket + 1, &rfds, NULL, NULL, &timeout);
 	if (recVal > 0) // -1 = Error, 0 = Would Block
 	{
-		const int RECV_SIZE = 1024;
+		const int RECV_SIZE = 2048;
 		char recvData[RECV_SIZE + 1] = {'\0'};
 		int bytesReceived = recv(m_socket, recvData, RECV_SIZE, 0);
 		if (bytesReceived <= 0)
 		{
-		stop();
+		  stop();
 		}
 
 		m_storedData.append(std::string(recvData));

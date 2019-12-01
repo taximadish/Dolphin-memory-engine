@@ -26,6 +26,11 @@ std::string AP::Name()
   return "AP";
 }
 
+int AP::Priority()
+{
+  return AVERAGE;
+}
+
 std::string AP::setValue(std::string value)
 {
   if (m_lastHostValues == "")

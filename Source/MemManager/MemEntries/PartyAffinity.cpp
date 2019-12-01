@@ -29,6 +29,11 @@ std::string PartyAffinity::Name()
   return "PartyAffinity";
 }
 
+int PartyAffinity::Priority()
+{
+  return LOW;
+}
+
 std::string PartyAffinity::setValue(std::string value)
 {
   std::vector<std::string> hostAffinities = customSplit(value, ",");

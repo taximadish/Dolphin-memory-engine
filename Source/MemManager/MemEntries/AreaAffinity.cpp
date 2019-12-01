@@ -29,6 +29,11 @@ std::string AreaAffinity::Name()
   return "AreaAffinity";
 }
 
+int AreaAffinity::Priority()
+{
+  return LOWEST;
+}
+
 std::string AreaAffinity::setValue(std::string value)
 {
   std::vector<std::string> hostAffinities = customSplit(value, ",");

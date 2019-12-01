@@ -19,6 +19,11 @@ std::string SkillUnlocks::Name()
   return "SkillUnlocks";
 }
 
+int SkillUnlocks::Priority()
+{
+  return LOWEST;
+}
+
 std::string SkillUnlocks::setValue(std::string value)
 {
   m_watch->writeMemoryFromString(value);

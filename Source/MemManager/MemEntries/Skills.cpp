@@ -62,6 +62,11 @@ std::string Skills::Name()
   return "Skills";
 }
 
+int Skills::Priority()
+{
+  return LOW;
+}
+
 std::string Skills::setValue(std::string value)
 {
   //std::string out = "";

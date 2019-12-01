@@ -13,6 +13,7 @@ public:
   MemManager(bool serverMode);
 
   void addEntry(IMemEntry* entry);
+  int GetPriority(std::string name);
   std::string setEntryValue(std::string name, std::string value);
   std::string hostGetEntryValue(std::string name);
 

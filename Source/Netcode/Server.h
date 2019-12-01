@@ -18,6 +18,7 @@ public:
 private:
   std::vector<std::string> customSplit(std::string s, std::string delim);
   std::string m_storedData;
+  int m_priorityCounter;
   std::map <int, std::map<std::string, int8_t>> m_updateAcks;
   bool hostHandleUpdate(int m_remoteSocket, std::string* storedData,
                         std::map<std::string, int8_t>* updateAcks);

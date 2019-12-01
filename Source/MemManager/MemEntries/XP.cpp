@@ -52,6 +52,11 @@ std::string XP::Name()
   return "XP";
 }
 
+int XP::Priority()
+{
+  return HIGH;
+}
+
 std::string XP::setValue(std::string value)
 {
   if (m_PartyXpWatches[0]->getStringFromMemory() == "???")

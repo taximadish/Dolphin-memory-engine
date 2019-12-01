@@ -3,10 +3,6 @@
 #include "../../MemoryWatch/MemWatchEntry.h"
 #include "../IMemEntry.h"
 
-#define NUM_CHARACTERS (8)
-
-#define BASE_RESERVE_ADDRESS (0x80CE437C)
-#define CHARACTER_SIZE (0x3DD4)
 #define XP_UPTOLEVEL_OFFSET (0)
 #define XP_PASTLEVEL_OFFSET (0x04)
 
@@ -21,6 +17,7 @@ public:
   XP(bool serverMode);
 
   std::string Name() override;
+  int Priority() override;
   std::string setValue(std::string value) override;
   std::string hostGetValue() override;
 

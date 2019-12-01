@@ -3,15 +3,17 @@
 #include "../../MemoryWatch/MemWatchEntry.h"
 #include "../IMemEntry.h"
 
-#define BASE_AFFINITIES_ADDR (0x805718D8)
-#define AFFINITY_SIZE (0x02)
 
-#define NUM_AFFINITIES (22) // Not 21 - one unused in the middle, just easier to include it
+#define NUM_ARTS (16)
+#define ART_SIZE (0x02)
 
-class PartyAffinity : public IMemEntry
+#define ARTMAXLEVELS_OFFSET (-0x1693)
+#define SHULK_EXTRAS_OFFSET (-0x49)
+
+class ArtMaxLevels : public IMemEntry
 {
 public:
-  PartyAffinity(bool serverMode);
+  ArtMaxLevels(bool serverMode);
 
   std::string Name() override;
   int Priority() override;
@@ -23,7 +25,8 @@ public:
 
 private:
   std::vector<std::string> customSplit(std::string s, std::string delim);
-  std::vector<MemWatchEntry*> m_PartyAffinityWatches;
+  std::vector<std::vector<MemWatchEntry*>> m_ArtMaxLevelsWatches;
+  std::vector<MemWatchEntry*> m_ShulkExtraWatches;
 
   std::string m_hostValue;
 };

@@ -16,21 +16,15 @@
 #include "Settings/DlgSettings.h"
 #include "Settings/SConfig.h"
 
-// Length in doublewords (4192 bytes)
-#define MUTEWATCH_LEN	524
-#define MUTEWATCH_VAL	"80 42 18 C8 FF FF FF FF"
-
 MainWindow::MainWindow()
 {
-  m_muteInitialised = false;
-
   initialiseWidgets();
   makeLayouts();
   DolphinComm::DolphinAccessor::init();
   updateDolphinHookingStatus();
 
   m_updateTimer = new QTimer(this);
-  m_updateTimer->setInterval(33); // 30 per second
+  m_updateTimer->setInterval(10); // 100 per second
   m_updateTimer->start();
   connect(m_updateTimer, &QTimer::timeout, this, &MainWindow::onUpdateTimer);
   m_server = new Server();
@@ -57,9 +51,6 @@ void MainWindow::initialiseWidgets()
 
   m_btnStartServer = new QPushButton(tr("Start Server"));
   connect(m_btnStartServer, &QPushButton::clicked, this, &MainWindow::onStartServerAttempt);
-
-  m_chkMute = new QCheckBox(tr("Disable Music"));
-  connect(m_chkMute, &QCheckBox::stateChanged, this, &MainWindow::onMuteChanged);
 
   m_txtAddress = new QLineEdit();
   m_txtAddress->setPlaceholderText("IP Address (Default localhost)");
@@ -96,7 +87,6 @@ void MainWindow::makeLayouts()
   QVBoxLayout* mainLayout = new QVBoxLayout;
   mainLayout->addWidget(m_lblDolphinStatus);
   mainLayout->addLayout(dolphinHookButtons_layout);
-  mainLayout->addWidget(m_chkMute);
   mainLayout->addWidget(m_lblConnectStatus);
   mainLayout->addLayout(socketSettings_layout);
   mainLayout->addWidget(m_lblServerStatus);
@@ -121,21 +111,6 @@ void MainWindow::onUpdateTimer()
       DolphinComm::DolphinAccessor::DolphinStatus::hooked)
   {
     m_client->update();
-    
-	if (!m_muteInitialised)
-    {
-      m_unmutedWatch = new MemWatchEntry("Music", 0x80315AC8, Common::MemType::type_byteArray,
-                            Common::MemBase::base_hexadecimal, true, MUTEWATCH_LEN * 8, false);
-      m_unMutedVal = m_unmutedWatch->getStringFromMemory();
-      m_muteInitialised = true;
-    }
-	
-	m_chkMute->setDisabled(false);
-  }
-  else
-  {
-    m_chkMute->setChecked(false);
-    m_chkMute->setDisabled(true);
   }
 }
 
@@ -222,28 +197,6 @@ void MainWindow::updateDolphinHookingStatus()
     m_btnUnhook->hide();
     break;
   }
-  }
-}
-
-void MainWindow::onMuteChanged()
-{
-  if (!m_muteInitialised)
-  {
-    return;
-  }
-
-  if (m_chkMute->isChecked())
-  {
-    for (int i = 0; i < MUTEWATCH_LEN / 2; i++)
-    {
-      MemWatchEntry temp = new MemWatchEntry("mute", 0x80315AD0 + i * 16, Common::MemType::type_byteArray,
-                                      Common::MemBase::base_hexadecimal, true, 8, false);
-      temp.writeMemoryFromString("80 42 18 C8 00 00 00 00");
-    }
-  }
-  else
-  {
-    m_unmutedWatch->writeMemoryFromString(m_unMutedVal);
   }
 }
 

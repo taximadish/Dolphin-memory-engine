@@ -19,6 +19,11 @@ std::string Money::Name()
   return "Money";
 }
 
+int Money::Priority()
+{
+  return AVERAGE;
+}
+
 std::string Money::setValue(std::string value)
 {
   m_watch->writeMemoryFromString(value);

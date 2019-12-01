@@ -33,7 +33,6 @@ public:
   void updateDolphinHookingStatus();
   void onHookAttempt();
   void onUnhook();
-  void onMuteChanged();
 
   void updateServerStatus();
   void onStartServerAttempt();
@@ -52,11 +51,6 @@ private:
   QPushButton* m_btnStartServer;
   Server* m_server;
   Client* m_client;
-
-  bool m_muteInitialised;
-  QCheckBox* m_chkMute;
-  MemWatchEntry* m_unmutedWatch;
-  std::string m_unMutedVal;
 
   QTimer* m_updateTimer;
   QLabel* m_lblConnectStatus;

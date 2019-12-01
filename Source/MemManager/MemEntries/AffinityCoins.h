@@ -5,8 +5,6 @@
 
 #define NUM_CHARACTERS (8)
 
-#define BASE_RESERVE_ADDRESS (0x80CE437C)
-#define CHARACTER_SIZE (0x3DD4)
 #define AFFINITYCOINS_OFFSET (0x263C)
 
 class AffinityCoins : public IMemEntry
@@ -15,6 +13,7 @@ public:
   AffinityCoins(bool serverMode);
 
   std::string Name() override;
+  int Priority() override;
   std::string setValue(std::string value) override;
   std::string hostGetValue() override;
 

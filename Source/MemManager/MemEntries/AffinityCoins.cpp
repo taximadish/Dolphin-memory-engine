@@ -24,6 +24,11 @@ std::string AffinityCoins::Name()
   return "AffinityCoins";
 }
 
+int AffinityCoins::Priority()
+{
+  return LOW;
+}
+
 std::string AffinityCoins::setValue(std::string value)
 {
   std::vector<std::string> hostAffinityCoins = customSplit(value, ",");

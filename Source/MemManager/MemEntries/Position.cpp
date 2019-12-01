@@ -22,6 +22,11 @@ std::string Position::Name()
   return "Pos";
 }
 
+int Position::Priority()
+{
+  return REALTIME;
+}
+
 std::string Position::setValue(std::string value)
 {
   bool nowInBattle = inBattle();
@@ -35,9 +40,11 @@ std::string Position::setValue(std::string value)
     // warped back to player)
     for (int slot = 1; slot < 2; slot++)
     {
-      m_YWatches[slot]->writeMemoryFromString("-10000");
+      m_XWatches[slot]->writeMemoryFromString("-10000");
+      m_YWatches[slot]->writeMemoryFromString(m_YWatches[0]->getStringFromMemory());
+      m_ZWatches[slot]->writeMemoryFromString("-10000");
       m_FallPeakWatches[slot]->writeMemoryFromString("-10000");
-      m_TeleblockerWatches[slot]->writeMemoryFromString("0");
+      m_TeleblockerWatches[slot]->writeMemoryFromString("1");
     }
 
     m_wasPreviouslyInBattle = true;
@@ -92,17 +99,17 @@ std::string Position::setValue(std::string value)
     if (num <= 1) // Only have enough party members to show nums 0 & 1
     {
       int slot = num + 1;
-      m_XWatches[slot]->writeMemoryFromString(m_prevXValues[slot]);
-      m_TargetXWatches[slot]->writeMemoryFromString(GetTarget(m_prevXValues[slot], x));
+      m_XWatches[slot]->writeMemoryFromString(x); // m_prevXValues[slot]);
+      m_TargetXWatches[slot]->writeMemoryFromString(x); // GetTarget(m_prevXValues[slot], x));
 
-      m_YWatches[slot]->writeMemoryFromString(m_prevYValues[slot]);
-      m_TargetYWatches[slot]->writeMemoryFromString(GetTarget(m_prevYValues[slot], y));
+      m_YWatches[slot]->writeMemoryFromString(y);   // m_prevYValues[slot]);
+      m_TargetYWatches[slot]->writeMemoryFromString(y); // GetTarget(m_prevYValues[slot], y));
 
-      m_ZWatches[slot]->writeMemoryFromString(m_prevZValues[slot]);
-      m_TargetZWatches[slot]->writeMemoryFromString(GetTarget(m_prevZValues[slot], z));
+      m_ZWatches[slot]->writeMemoryFromString(z);       // m_prevZValues[slot]);
+      m_TargetZWatches[slot]->writeMemoryFromString(z); // GetTarget(m_prevZValues[slot], z));
 
-      m_TargetAngleWatches[slot]->writeMemoryFromString(m_prevAngles[slot]);
-	  m_CurrentAngleWatches[slot]->writeMemoryFromString(m_prevAngles[slot]);
+      m_TargetAngleWatches[slot]->writeMemoryFromString(angle);
+      m_CurrentAngleWatches[slot]->writeMemoryFromString(angle); // m_prevAngles[slot]);
 
       m_FallPeakWatches[slot]->writeMemoryFromString("-10000");
       m_YVelWatches[slot]->writeMemoryFromString("0");
@@ -176,9 +183,9 @@ std::string Position::GetTarget(std::string prevVal, std::string newVal)
   float prevF = atof(prevVal.c_str());
   float newF = atof(newVal.c_str());
   float diffF = newF - prevF;
-  float targetF = prevF + (diffF * TARGET_MULTI);
+  float extraDiff = diffF * TARGET_MULTI;
 
-  return std::to_string(targetF);
+  return std::to_string(prevF + extraDiff);
 }
 
 void Position::initMainPosWatches()
