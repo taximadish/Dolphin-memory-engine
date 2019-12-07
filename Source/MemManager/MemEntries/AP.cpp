@@ -99,7 +99,7 @@ std::string AP::getUpdate(std::string hostVal)
 
 	int diff = currentAP - oldAP;
 
-	if (diff < 0)
+	if (diff < 0 || oldAP == 0) // Don't share initial AP for recruiting character (eg. from 0 -> 8000)
     {
       diff = 0;
 	}
